@@ -89,6 +89,8 @@ Newest documentation first. Older release notes and historical lore follow below
 **License:** Free personal use = **`EULA.md`**; commercial = **`LICENSE_COMMERCIAL.md`** / considerthecoin@protonmail.com  
 **Copyright:** Timothy Hart Branton JR aka NobleSingleton @OuterWebster / Naught Audio  
 **Binary:** `NaughtAudioPlayer.exe` (title bar: Naught Audio Player)  
+**UI skins:** **Naught Skin** combo — *CosmoNaught Cyan* / *Luxurious Warmth* (look only; **Luxurious Warmth** is the default).  
+**Dry Mode:** one-toggle plain recording path (above Naught Kernel) — see Controls guide below for non-audiophiles.  
 
 ---
 
@@ -111,7 +113,7 @@ Feedback from the first external test (Exclusive toggle, UI scale, system audio,
 
 - **ON (default Concert):** best quality / low-latency path to the DAC. **Other apps usually cannot play sound on that device until you switch to Shared or quit VOID.**
 - **OFF (Shared):** Windows mixes VOID with browsers, Discord, system sounds, etc.
-- **Toggling Exclusive while a track is loaded:** playback **stops** on purpose. Wait for *“Exclusive ready - press Play”* or *“Shared ready - press Play”*, then press **Play**. Do not expect seamless hot-swap mid-song (that path caused static).
+- **Toggling Exclusive while a track is loaded:** playback **stops** on purpose. The billboard names the mode you switched into (Exclusive or Shared) and says audio is stopped — press **Play** to resume. Do not expect seamless hot-swap mid-song (that path caused static).
 
 ### Restore points (recent)
 
@@ -173,7 +175,7 @@ You do **not** need to be an audiophile to use VOID Player. Start with defaults,
 
 | Control | What it does (simple) | Beginner guidance |
 |---------|------------------------|-------------------|
-| **Exclusive (Bit-Perfect / Low-Latency)** | When ON, Windows gives VOID more direct control of your speakers/DAC (**best quality**, lower latency). When OFF (**Shared**), Windows mixes VOID with other apps. | **ON** for focused listening. **OFF** if you need YouTube/Discord/system sounds at the same time. **Toggling stops playback** — press Play after the status says ready. |
+| **Exclusive (Bit-Perfect / Low-Latency)** | When ON, Windows gives Naught more direct control of your speakers/DAC (**best quality**, lower latency). When OFF (**Shared**), Windows mixes Naught with other apps. | **ON** for focused listening. **OFF** if you need YouTube/Discord/system sounds at the same time. **Toggling stops playback.** Billboard names the mode (Exclusive or Shared) and says **audio stopped, press Play to resume**. |
 | **Buffer Size** | How much audio is prepared per slice (16…2048 samples). **Larger = more stable, more delay.** Smaller = snappier, easier to glitch on weak PCs. | Ship default **2048** is safest. Only lower if you need lower latency and the PC stays clean. |
 | **Upsampling** | Extra internal processing stages for the “warmth/soft-clip” path (Off, x2, x4, x8, x16). Higher = more CPU. | Ship default **x2**. Use **Off** on weak laptops. Don’t jump to x16 unless the machine is strong and sound stays clean. |
 | **CPU Affinity** | Which CPU cores the player prefers (Auto, cores 2–7, Ryzen/Intel specialty options). | Leave **Auto**. Change only if a support note tells you to. |
@@ -185,11 +187,12 @@ You do **not** need to be an audiophile to use VOID Player. Start with defaults,
 
 | Control | What it does (simple) | Beginner guidance |
 |---------|------------------------|-------------------|
+| **Dry Mode** | One switch (above **Naught Kernel**) that turns off the signature effects stack so you hear the plain recording. **OFF restores your previous settings.** | Use for A/B “room vs track.” Default **OFF**. See the Dry Mode section below. |
 | **Soft Clip Dry (Analog Warmth)** | Adds gentle saturation to the dry path so peaks don’t hard-clip; sounds more “analog glue.” | ON by default. OFF for a colder, more clinical dry tone. |
 | **Warmth Drive** | How hard that warmth is pushed (drive amount). | Higher = thicker/more saturated; lower = cleaner. |
 | **Saturation Type** | Flavor of that warmth: **Off**, **Tape**, or **Tube**. | Tape = smoother tape-like; Tube = different harmonic flavor. Off = no sat type path. |
-| **Full Fixed-Point Path** | Uses VOID’s integer (Q30) processing identity for the signature chain. | Leave **ON** for the designed sound. OFF is for comparison/lab, not daily listening. |
-| **VOID Kernel** | Short “early” reverb sweetener (fine early reflections). | ON by default (Concert). OFF if you want less early IR cost or a different space. |
+| **Full Fixed-Point Path** | Uses Naught’s integer (Q30) processing identity for the signature chain. | Leave **ON** for the designed sound. OFF is for comparison/lab, not daily listening. |
+| **Naught Kernel** | Short “early” reverb sweetener (fine early reflections). | ON by default (Concert). OFF if you want less early IR cost or a different space. |
 | **VOID Console** | Console-style tone color (mix desk character). | ON for signature; OFF for cleaner path. |
 | **VOID Horn** | Forward “horn/presence” lift in the mid-highs. | ON for signature edge; OFF if too bright. |
 | **VOID Limiter** | Keeps peaks from blowing past a ceiling (safety + loudness control). | Leave ON unless you know you want un-limited peaks. |
@@ -267,6 +270,139 @@ Safe daily driver (HF/HK Concert intent):
 - Master Volume to taste  
 
 Only change more controls after you’re comfortable with Play/Stop and volume.
+
+---
+
+## Naught Skin (look only — not sound)
+
+Near the preset controls is a combo labeled **Naught Skin** (it sits where the old Vision button was).
+
+| Choice | What you get |
+|--------|----------------|
+| **Luxurious Warmth** (**default**) | Warm listening-room art, classic tape plate, lime / gold-green UI accents. |
+| **CosmoNaught Cyan** | Alien / cyan-neon chamber art, cyber tape panel, cyan UI accents. |
+
+**Important:** Skin swap is **appearance only**. It does **not** change the audio engine, Exclusive mode, buffer size, or any DSP. Safe to flip anytime (including while stopped or playing).
+
+Your choice is saved automatically (app settings under Naught Audio) and restored next launch. First launch (no saved preference) uses **Luxurious Warmth**.
+
+**Naught Vision (beta):** The Vision button is **hidden for now**. The feature still exists in the code, but it needs a local ComfyUI / Flux Schnell setup and is **not** plug-and-play. Most users would think it was broken without a long install. See advanced Vision notes later in the README if you want to set it up yourself.
+
+---
+
+## Dry Mode toggle (new — plain English)
+
+### What it is (for non-audiophiles)
+
+**Dry Mode** is a single switch on the right side of the player, **directly above Naught Kernel**.
+
+Think of Naught’s normal sound as “the recording plus a concert room and some analog color” (space, tape, warmth, gentle peak control). **Dry Mode turns that stack off** so you hear the track itself — no hall, no tape glue, no horn lift — just the file through the player.
+
+You do **not** need to know what reverb, IR, or soft-clip mean. Flip **Dry Mode ON**, press Play, compare. Flip **Dry Mode OFF** and your previous knobs/toggles come back automatically.
+
+| Dry Mode | What you hear |
+|----------|----------------|
+| **OFF** (default) | Your current setup (Concert / Signature defaults unless you changed them) |
+| **ON** | Plain recording path — effects and color modules off |
+
+**What it does under the hood (still plain language):** saves a snapshot of your effect toggles, then turns off reverb/space, tape, soft-clip warmth, console, horn, kernel, limiter, sets wet mix to zero, saturation to Off, and upsampling to Off. Turning Dry Mode **off** restores that snapshot. It does **not** change Exclusive/Shared, buffer size, volume, skin, or playlist.
+
+**Good for:** A/B “is the room helping?”, critical listening to the master, checking if something is “the track” vs “the processing.”  
+**Not required for daily use** — leave it off if you like the full Naught sound.
+
+**Billboard:** when you enable it you’ll see a short status like *Dry Mode ON - plain recording path…*; when you disable it, *previous settings restored*.
+
+---
+
+## How to get the driest signal possible (plain English)
+
+**Fast path:** turn **Dry Mode ON** (above Naught Kernel). Done.
+
+**What “dryest” means here:** as close as possible to the plain recording leaving the player — **no reverb/space**, **no signature color**, **no tape/warmth/presence** — just the file (with only the unavoidable player plumbing: decode, buffering, volume, and your device).
+
+You do **not** need to understand DSP. Prefer **Dry Mode**. The manual checklist below is only if you want to tweak individual knobs yourself.
+
+### Before you start
+1. **Load** a track (**Load Audio** or **Load Folder**).  
+2. Press **Stop** if something is playing (easier to flip toggles calmly).  
+3. Set **Master Volume** to a comfortable level (you can fine-tune after).
+
+### Recommended: use the Dry Mode toggle
+
+1. Find **Dry Mode** on the **right column**, **above Naught Kernel**.  
+2. Turn **Dry Mode ON**.  
+3. Press **Play**.  
+4. When finished comparing, turn **Dry Mode OFF** to restore your previous settings.
+
+### Manual step-by-step (optional — Dry Mode already does this)
+
+**A. Kill the wet / reverb space**
+
+1. Turn **Bypass Reverb** **ON** (bypassed = reverb path off).  
+   - *If you don’t see Bypass Reverb:* push **Dry / Wet** (or Wet mix) all the way toward **dry / 0%**.  
+2. Optional but clearer: lower **Reverb Gain** and **Wet Output Gain** to minimum so wet stays quiet even if mix moves later.  
+3. You do **not** need an IR loaded for dry listening. If one is loaded, that’s fine as long as reverb is bypassed / wet is zero.
+
+**B. Turn off signature color modules**
+
+Turn these **OFF** one by one:
+
+4. **Multi-Band Tape** (or Multiband Tape) — **OFF**  
+5. **Soft Clip Dry** (analog warmth on the dry path) — **OFF**  
+6. **Console** — **OFF**  
+7. **Horn** — **OFF**  
+8. **Kernel** (Naught Kernel) — **OFF**  
+9. **Limiter** — **OFF** if you want zero peak management (optional: leave **ON** for safety on hot masters; it is not “reverb,” but it can change loudness shape)
+
+**C. Clean the “character” knobs**
+
+10. **Warmth Drive** — lowest / zero if Soft Clip is already off (harmless either way).  
+11. **Saturation Type** — **Off** (if the combo offers Off / Tape / Tube).  
+12. **Upsampling** — set to **Off** (or lowest). Higher ups is for soft-clip/OS character; dry path doesn’t need it.
+
+**D. Device path (optional for “dryest + cleanest delivery”)**
+
+13. **Exclusive** — leave **ON** for focused listening (best path to the DAC).  
+    - Use **OFF (Shared)** only if you need other apps making sound at the same time.  
+14. **Buffer Size** — leave **2048** unless you know you need lower latency.  
+15. **CPU Affinity** — leave **Auto**.  
+16. **Full Fixed-Point** — can stay **ON** (it’s the math path, not a “effect”); turning it off is for lab A/B, not required for dry listening.
+
+**E. Play and check**
+
+17. Press **Play**.  
+18. You should hear the track **flat and dry** — no hall, no tape glue, no horn lift.  
+19. If it still sounds “wet” or huge: double-check **Bypass Reverb** is ON and **Dry/Wet** is fully dry, and that **Kernel** and **Tape** are OFF.
+
+### Quick “dry checklist” (copy this)
+
+| Control | Dry setting |
+|---------|-------------|
+| **Dry Mode** (preferred) | **ON** |
+| Bypass Reverb | **ON** |
+| Dry / Wet | **Fully dry / 0** |
+| Multi-Band Tape | **OFF** |
+| Soft Clip Dry | **OFF** |
+| Warmth Drive | **Min** |
+| Saturation Type | **Off** |
+| Console | **OFF** |
+| Horn | **OFF** |
+| Kernel | **OFF** |
+| Limiter | **OFF** (or ON for peak safety) |
+| Upsampling | **Off** |
+| Master Volume | To taste |
+
+### Getting back to the “Naught sound”
+
+- Turn **Dry Mode OFF** (restores the snapshot taken when you enabled it), **or**  
+- Use a **preset** (e.g. Signature / Concert-style) if available, **or** turn Tape, Soft Clip, Console, Horn, Kernel, Limiter back **ON** and set wet/reverb to taste.  
+- Skin choice (CosmoNaught Cyan / Luxurious Warmth) does **not** need to change for dry vs signature — only the toggles above matter for the signal.
+
+### What dry mode is *not*
+
+- It is **not** a separate “bit-perfect lab meter” mode.  
+- Exclusive still depends on your Windows device and sample-rate match.  
+- The player still decodes and buffers the file; “dry” means **no signature wet/color stack**, not “zero software at all.”
 
 ---
 
