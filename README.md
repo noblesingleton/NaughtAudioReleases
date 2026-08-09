@@ -29,15 +29,13 @@
          ██████████████████████████████████████
         ████████████████████████████████████████
        ██████████████████████████████████████████
-       ██████████████████████████████████████████ 
-      █████   █████    ███████    █████ ██████████  
-    ░░███   ░░███   ███░░░░░███ ░░███ ░░███░░░░███ 
-     ░███    ░███  ███     ░░███ ░███  ░███   ░░███
-     ░███    ░███ ░███      ░███ ░███  ░███    ░███
-     ░░███   ███  ░███      ░███ ░███  ░███    ░███
-      ░░░█████░   ░░███     ███  ░███  ░███    ███ 
-        ░░███      ░░░███████░   █████ ██████████  
-         ░░░         ░░░░░░░    ░░░░░ ░░░░░░░░░░   
+       ██████████████████████████████████████████
+    ███╗ ██╗ █████╗ ██╗  ██╗ ██████╗ ██╗ ██╗████████╗
+    ████╗██║██╔══██╗██║  ██║██╔════╝ ██║ ██║╚══██╔══╝
+    ██╔████║███████║██║  ██║██║  ███╗███████║  ██║   
+    ██║╚███║██╔══██║██║  ██║██║   ██║██╔══██║  ██║   
+    ██║ ╚██║██║  ██║╚██████╔╝╚██████╔╝██║ ██║  ██║   
+    ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝  ╚═════╝ ╚═╝ ╚═╝  ╚═╝   
        ██████████████████████████████████████████
        ██████████████████████████████████████████
        ██████████████████████████████████████████
@@ -59,17 +57,16 @@
       .     .      .      .      .      .     .      .     
    .      .      .     .      .      .     .      .      .  
 
-
 .     .      .      .      .      .      .      .      .   
       .      .      .     .      .      .      .     .     
          .      .      .      .      .      .      .        
             .      .      .      .      .      .           
-               .      .      .      .      .              
-                  .      .      .      .                 
-                     .      .      .                     
+               .      .      .      .      .               
+                  .      .      .      .                  
+                     .      .      .                      
                         .      .                        
-                           .                           
-                              .                            
+                           .                            
+                              .                             
                                  .
 ```
 
@@ -89,7 +86,7 @@ Newest documentation first. Older release notes and historical lore follow below
 **License:** Free personal use = **`EULA.md`**; commercial = **`LICENSE_COMMERCIAL.md`** / considerthecoin@protonmail.com  
 **Copyright:** Timothy Hart Branton JR aka NobleSingleton @OuterWebster / Naught Audio  
 **Binary:** `NaughtAudioPlayer.exe` (title bar: Naught Audio Player)  
-**UI skins:** **Naught Skin** combo — *CosmoNaught Cyan* / *Luxurious Warmth* (look only; **Luxurious Warmth** is the default).  
+**UI skins:** **Naught Skin** combo — *CosmoNaught Cyan* / *Luxury Warm* (look only; **Luxury Warm** is the default).  
 **Dry Mode:** one-toggle plain recording path (above Naught Kernel) — see Controls guide below for non-audiophiles.  
 
 ---
@@ -279,12 +276,12 @@ Near the preset controls is a combo labeled **Naught Skin** (it sits where the o
 
 | Choice | What you get |
 |--------|----------------|
-| **Luxurious Warmth** (**default**) | Warm listening-room art, classic tape plate, lime / gold-green UI accents. |
+| **Luxury Warm** (**default**) | Warm listening-room art, classic tape plate, lime / gold-green UI accents. |
 | **CosmoNaught Cyan** | Alien / cyan-neon chamber art, cyber tape panel, cyan UI accents. |
 
 **Important:** Skin swap is **appearance only**. It does **not** change the audio engine, Exclusive mode, buffer size, or any DSP. Safe to flip anytime (including while stopped or playing).
 
-Your choice is saved automatically (app settings under Naught Audio) and restored next launch. First launch (no saved preference) uses **Luxurious Warmth**.
+Your choice is saved automatically (app settings under Naught Audio) and restored next launch. First launch (no saved preference) uses **Luxury Warm**.
 
 **Naught Vision (beta):** The Vision button is **hidden for now**. The feature still exists in the code, but it needs a local ComfyUI / Flux Schnell setup and is **not** plug-and-play. Most users would think it was broken without a long install. See advanced Vision notes later in the README if you want to set it up yourself.
 
@@ -396,7 +393,7 @@ Turn these **OFF** one by one:
 
 - Turn **Dry Mode OFF** (restores the snapshot taken when you enabled it), **or**  
 - Use a **preset** (e.g. Signature / Concert-style) if available, **or** turn Tape, Soft Clip, Console, Horn, Kernel, Limiter back **ON** and set wet/reverb to taste.  
-- Skin choice (CosmoNaught Cyan / Luxurious Warmth) does **not** need to change for dry vs signature — only the toggles above matter for the signal.
+- Skin choice (CosmoNaught Cyan / Luxury Warm) does **not** need to change for dry vs signature — only the toggles above matter for the signal.
 
 ### What dry mode is *not*
 
