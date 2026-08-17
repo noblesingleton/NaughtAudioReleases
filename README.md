@@ -72,22 +72,22 @@
 
 ---
 
-# CURRENT RELEASE — Naught Audio Player (v3.10.HK rebrand)
+# CURRENT RELEASE — Naught Audio Player (v3.10.HR + Plan C SRC)
 
 **Product name:** Naught Audio Player (formerly VOID Player / VoidPlayer_Clean)  
 **Website:** https://naughtaudio.com  
 **Engine code identifiers** (VoidKernel, etc.) are unchanged for stability; **user-facing branding** is Naught Audio.
 
-Newest documentation first. Older release notes and historical lore follow below (newest → oldest).
+Newest documentation first. Older release notes and historical lore follow below (newest → oldest). **Stop at the Historical documentation archive banner if you want what the binary actually does.**
 
-**Tag:** `v3.10.HK` (builds on HF clean audio + HJ UI/device polish) + **Naught Audio rebrand**  
+**Tag:** `v3.10.HR` (HK + Exclusive auto-resume + Plans A–C) + **Naught Audio rebrand**  
 **Product:** **Naught Audio Player** (formerly VOID Player / VoidPlayer_Clean; JUCE 7, Windows primary)  
 **Website:** https://naughtaudio.com  
 **License:** Free personal use = **`EULA.md`**; commercial = **`LICENSE_COMMERCIAL.md`** / considerthecoin@protonmail.com  
 **Copyright:** Timothy Hart Branton JR aka NobleSingleton @OuterWebster / Naught Audio  
 **Binary:** `NaughtAudioPlayer.exe` (title bar: Naught Audio Player)  
 **UI skins:** **Naught Skin** combo — *CosmoNaught Cyan* / *Luxury Warm* (look only; **Luxury Warm** is the default).  
-**Dry Mode:** one-toggle plain recording path (above Naught Kernel) — see Controls guide below for non-audiophiles.  
+**Dry Mode:** one-toggle plain recording path (right column) — touching a stacked control exits Dry and restores your snapshot. See Controls guide.  
 
 ---
 
@@ -97,7 +97,7 @@ Feedback from the first external test (Exclusive toggle, UI scale, system audio,
 
 | Report | Status | What we did |
 |--------|--------|-------------|
-| **Exclusive OFF while playing → static / garbage** | **Fixed (HK)** | Mode switch always **stops** playback (no hot-swap under live audio). Reopen uses proper named WASAPI open (`openWasapiOutput`). Transport **fully rebuilds** VoidBuffering + rate path for the new device rate. Billboard: press Play when ready. |
+| **Exclusive OFF while playing → static / garbage** | **Fixed (HK / HO / HP)** | Mode switch **stops**, reopens, rebuilds transport. **HO/HP:** if you were playing, it **auto-resumes** after Shared or a **live** Exclusive client is up. Exclusive ON will not run a second native-rate reopen on that Play (that was the static path). Billboard says **will resume**, not press Play, when resume is armed. |
 | **Illegal characters on status billboard after Exclusive toggle** | **Fixed (HK)** | Status strings are **pure ASCII** only (no en-dash / ellipsis glyphs that broke some fonts). |
 | **Exclusive resume still corrupted after stop-then-Play** | **Fixed (HK)** | After mode switch: full `attachTransportWithRatePolicy` rebuild; Play forces rebuild flag if needed; position saved to resume cleanly. |
 | **UI lag scaling to 2K / fullscreen** | **Fixed (HJ)** | Main window is **fixed size** (~1152×900), **not resizable**, **no maximize**. Matches design canvas for a crisp listening-room background. |
@@ -110,7 +110,7 @@ Feedback from the first external test (Exclusive toggle, UI scale, system audio,
 
 - **ON (default Concert):** best quality / low-latency path to the DAC. **Other apps usually cannot play sound on that device until you switch to Shared or quit VOID.**
 - **OFF (Shared):** Windows mixes VOID with browsers, Discord, system sounds, etc.
-- **Toggling Exclusive while a track is loaded:** playback **stops** on purpose. The billboard names the mode you switched into (Exclusive or Shared) and says audio is stopped — press **Play** to resume. Do not expect seamless hot-swap mid-song (that path caused static).
+- **Toggling Exclusive while a track is loaded:** playback **stops** while the device reopens, then auto-resumes from the same position when the new client is live. **Exclusive OFF (Shared)** always resumes after Shared opens. **Exclusive ON** resumes only if Exclusive actually opened — and Play will not run a second exclusive reopen (that was the static path). If Exclusive fails and falls back to Shared, press **Play**. There is a short mute, not a seamless hot-swap.
 
 ### Restore points (recent)
 
@@ -118,7 +118,21 @@ Feedback from the first external test (Exclusive toggle, UI scale, system audio,
 |------|----------|
 | `_restore_points/ship_HF_clean_audio_*` | Clean exclusive audio (pre-UI polish) |
 | `_restore_points/ship_HJ_ui_exclusive_*` | Quit release + fixed window + multiband bg |
-| Current tree | **HK** = HJ + exclusive rebuild + ASCII billboard |
+| `_restore_points/pre_polyphase_src_20260816_225425` | **Before** hidden polyphase SRC (native / halfband / JUCE resample still ship) |
+| Current tree | **HR** = HK + Exclusive auto-resume + Plans A–C |
+
+### This session — Plans A–C (HO → HR + Plan C)
+
+| Pass | What shipped |
+|------|----------------|
+| **HO** | Billboard ASCII sanitize (filenames / unsupported / quit). Exclusive **OFF** auto-resumes on Shared. Parked T2 dropped on mode switch. |
+| **HP** | Exclusive **ON** auto-resumes only if Exclusive actually opened. One-shot `PLAY NATIVE PATH SKIP` so resume cannot close the client we just built. Timer and a manual Play cannot both fire. |
+| **HQ (Plan A)** | Billboard and MMCSS follow the **live** device (not toggle intent). Buffering log is `src=native\|halfband\|polyphase`. Volume slider updates **both** transports. Dry/kernel/tape/bypass published as atomics (callback does not read `ToggleButton`). |
+| **HR (Plan B)** | Dry lane skips the ±1.2 pre-clamp. Full Fixed-Point toggle **hidden** (it never drove the live Q30 bus). Dry Mode **locks** stacked **toggles, sliders, knobs, upsample, and presets**: touch one and Dry turns off, snapshot restores, then the new value is kept. **Naught Kernel** moved into the old Fixed-Point slot (next to Multi-Band Tape). Concert boot log is `v3.10.HR`. |
+| **Plan C** | Hidden SRC emit uses **256-phase Kaiser tables** (lerp) instead of per-sample `sinc`. Same 80-tap / β=9 / cutoff 0.88. EOF pad actually sees end-of-file. Offline proof: `tests/void_polyphase_src_test.exe` **ALL PASS**. Native match and exact 2:1 halfband unchanged. |
+| **Arithmetic suite** | `tests/void_arithmetic_test.exe` **ALL PASS** — Q30 convert/mul/sat/softclip, halfband 2:1, Dry pre-clamp skip, VoidKernel impulse/determinism. |
+
+Live Exclusive 44.1 on/off soaks: native match when Exclusive holds 44.1; `src=polyphase` only on Shared 48k + 44.1 file; `PLAY NATIVE PATH SKIP` + `autoResume=T` on Exclusive ON resume. Volume, seek, Exclusive, buffer, affinity, Purity, skin, and crossfade length are **not** Dry-locked (Dry never owned them).
 
 ---
 
@@ -214,7 +228,7 @@ You do **not** need to be an audiophile to use VOID Player. Start with defaults,
 
 | Control | What it does (simple) | Beginner guidance |
 |---------|------------------------|-------------------|
-| **Exclusive (Bit-Perfect / Low-Latency)** | When ON, Windows gives Naught more direct control of your speakers/DAC (**best quality**, lower latency). When OFF (**Shared**), Windows mixes Naught with other apps. | **ON** for focused listening. **OFF** if you need YouTube/Discord/system sounds at the same time. **Toggling stops playback.** Billboard names the mode (Exclusive or Shared) and says **audio stopped, press Play to resume**. |
+| **Exclusive (Bit-Perfect / Low-Latency)** | When ON, Windows gives Naught more direct control of your speakers/DAC (**best quality**, lower latency). When OFF (**Shared**), Windows mixes Naught with other apps. | **ON** for focused listening. **OFF** if you need YouTube/Discord/system sounds at the same time. Toggle either way: short mute, then auto-resume if that mode actually opened. |
 | **Buffer Size** | How much audio is prepared per slice (16…2048 samples). **Larger = more stable, more delay.** Smaller = snappier, easier to glitch on weak PCs. | Ship default **2048** is safest. Only lower if you need lower latency and the PC stays clean. |
 | **Upsampling** | Extra internal processing stages for the “warmth/soft-clip” path (Off, x2, x4, x8, x16). Higher = more CPU. | Ship default **x2**. Use **Off** on weak laptops. Don’t jump to x16 unless the machine is strong and sound stays clean. |
 | **CPU Affinity** | Which CPU cores the player prefers (Auto, cores 2–7, Ryzen/Intel specialty options). | Leave **Auto**. Change only if a support note tells you to. |
@@ -226,12 +240,12 @@ You do **not** need to be an audiophile to use VOID Player. Start with defaults,
 
 | Control | What it does (simple) | Beginner guidance |
 |---------|------------------------|-------------------|
-| **Dry Mode** | One switch (above **Naught Kernel**) that turns off the signature effects stack so you hear the plain recording. **OFF restores your previous settings.** | Use for A/B “room vs track.” Default **OFF**. See the Dry Mode section below. |
+| **Dry Mode** | One switch (right column) that turns off the signature effects stack so you hear the plain recording. **OFF restores your previous settings.** Touching a stacked control (Tape, Kernel, Warmth, wet sliders, upsample, preset, …) **exits Dry** and restores the snapshot. | Use for A/B “room vs track.” Default **OFF**. See the Dry Mode section below. |
 | **Soft Clip Dry (Analog Warmth)** | Adds gentle saturation to the dry path so peaks don’t hard-clip; sounds more “analog glue.” | ON by default. OFF for a colder, more clinical dry tone. |
 | **Warmth Drive** | How hard that warmth is pushed (drive amount). | Higher = thicker/more saturated; lower = cleaner. |
 | **Saturation Type** | Flavor of that warmth: **Off**, **Tape**, or **Tube**. | Tape = smoother tape-like; Tube = different harmonic flavor. Off = no sat type path. |
-| **Full Fixed-Point Path** | Uses Naught’s integer (Q30) processing identity for the signature chain. | Leave **ON** for the designed sound. OFF is for comparison/lab, not daily listening. |
-| **Naught Kernel** | Short “early” reverb sweetener (fine early reflections). | ON by default (Concert). OFF if you want less early IR cost or a different space. |
+| **Full Fixed-Point Path** | Q30 is the live Signature wet identity. | **No user toggle** (hidden). The old switch only poked an unused engine. |
+| **Naught Kernel** | Short “early” reverb sweetener (fine early reflections). | ON by default (Concert). Lives in the main toggle row (old Full Fixed-Point slot), next to Multi-Band Tape. |
 | **VOID Console** | Console-style tone color (mix desk character). | ON for signature; OFF for cleaner path. |
 | **VOID Horn** | Forward “horn/presence” lift in the mid-highs. | ON for signature edge; OFF if too bright. |
 | **VOID Limiter** | Keeps peaks from blowing past a ceiling (safety + loudness control). | Leave ON unless you know you want un-limited peaks. |
@@ -333,7 +347,7 @@ Your choice is saved automatically (app settings under Naught Audio) and restore
 
 ### What it is (for non-audiophiles)
 
-**Dry Mode** is a single switch on the right side of the player, **directly above Naught Kernel**.
+**Dry Mode** is a single switch on the **right column** of the player (limiter side). **Naught Kernel** is in the main toggle row, next to Multi-Band Tape.
 
 Think of Naught’s normal sound as “the recording plus a concert room and some analog color” (space, tape, warmth, gentle peak control). **Dry Mode turns that stack off** so you hear the track itself — no hall, no tape glue, no horn lift — just the file through the player.
 
@@ -355,7 +369,7 @@ You do **not** need to know what reverb, IR, or soft-clip mean. Flip **Dry Mode 
 
 ## How to get the driest signal possible (plain English)
 
-**Fast path:** turn **Dry Mode ON** (above Naught Kernel). Done.
+**Fast path:** turn **Dry Mode ON** (right column). Done.
 
 **What “dryest” means here:** as close as possible to the plain recording leaving the player — **no reverb/space**, **no signature color**, **no tape/warmth/presence** — just the file (with only the unavoidable player plumbing: decode, buffering, volume, and your device).
 
@@ -368,7 +382,7 @@ You do **not** need to understand DSP. Prefer **Dry Mode**. The manual checklist
 
 ### Recommended: use the Dry Mode toggle
 
-1. Find **Dry Mode** on the **right column**, **above Naught Kernel**.  
+1. Find **Dry Mode** on the **right column**.  
 2. Turn **Dry Mode ON**.  
 3. Press **Play**.  
 4. When finished comparing, turn **Dry Mode OFF** to restore your previous settings.
@@ -405,7 +419,7 @@ Turn these **OFF** one by one:
     - Use **OFF (Shared)** only if you need other apps making sound at the same time.  
 14. **Buffer Size** — leave **2048** unless you know you need lower latency.  
 15. **CPU Affinity** — leave **Auto**.  
-16. **Full Fixed-Point** — can stay **ON** (it’s the math path, not a “effect”); turning it off is for lab A/B, not required for dry listening.
+16. **Full Fixed-Point** — no user toggle (hidden). Q30 is always the Signature wet identity. Not required for dry listening.
 
 **E. Play and check**
 
@@ -535,7 +549,7 @@ WAV / FLAC / AIFF-class IR files into convolution / kernel path (`Load IR`).
 - **Rate policy when rates differ:**
   1. **Native match** (file ≈ device) → direct attach, OS stages free to UI.
   2. **Exact 2:1** (e.g. 96k→48k) → **`VoidHalfbandDecimate2Source`** (HQ symmetric halfband) + buffering; softclip OS stages forced to base (cost=1).
-  3. **Other ratios** → JUCE transport resampling; OS stages 0 on heavy cost.
+  3. **Other ratios** → hidden Kaiser-sinc **polyphase** (`VoidPolyphaseResample`, `kUsePolyphaseSrc = true`, 256-phase tables). OS stages 0 on heavy cost. JUCE resample only if the flag is off.
 - **Buffer reconfig (soft-first):** change buffer without killing exclusive client when possible; restore previous setup on fail; hard reopen only if device null; resume playback.
 - **Buffer UI:** 16 / 32 / 64 / 128 / 256 / 512 / 1024 / **2048** (max ship; 4096 removed).
 
@@ -1132,7 +1146,8 @@ Confirm at startup:
 ## Residual / non-blockers (honest)
 
 - Do **not** use Visual Studio Output window CB LATE as a ship metric (debugger `OutputDebugString` inflates latency).  
-- Non–2:1 file/device rates still use JUCE resampling (halfband path is exact 2:1).  
+- Non–2:1 file/device rates use hidden Kaiser-sinc polyphase (`VoidPolyphaseResample.h`, `kUsePolyphaseSrc = true`, **256-phase tables**) instead of JUCE resample. Exact 2:1 still uses HQ halfband; native match still has no SRC. Numeric tests: `tests/void_polyphase_src_test.exe` (determinism, length, impulse, 1 kHz pass, 22 kHz stop, DC, seek/reset). Revert: set `kUsePolyphaseSrc = false` or restore `_restore_points/pre_polyphase_src_20260816_225425`.  
+- Broader arithmetic suite (Q30 convert/mul/sat/softclip, halfband 2:1, Dry pre-clamp skip, VoidKernel impulse/determinism): `tests/void_arithmetic_test.exe`.  
 - Exclusive toggle + multi-hour soak remain good post-ship soak tests, not open ship-stoppers after the gate table above.  
 - Prefer **512** buffer as default; **256** is a valid user choice once soft reconfig is confirmed, not the factory default.
 
@@ -1148,6 +1163,8 @@ Confirm at startup:
 ---
 
 # Historical documentation archive
+
+**Everything below this line is historical.** It is not the current product contract. Ship behavior is the **CURRENT RELEASE** chapter at the top (v3.10.HR). Claims below about 256× / Q63 / 8 GB arenas / live bit-perfect LEDs are lore, not `NaughtAudioPlayer.exe`.
 
 Greetz, phase lore, April 2026 feature sheets, rituals, papers, and older engineering notes. Preserved in full; not deleted. Within this archive, material continues from newer lore toward older notes (v3.7.26 log status placed before LEGAL).
 
