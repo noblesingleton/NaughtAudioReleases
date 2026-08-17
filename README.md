@@ -122,6 +122,34 @@ Feedback from the first external test (Exclusive toggle, UI scale, system audio,
 
 ---
 
+## Engineering discipline — laboratory instrument, avionics clock, telemetry mind
+
+Outside observers have described the desktop engine as closer to **mission-critical software** than to a typical media player — the same family of thinking you find in laboratory instruments, aerospace avionics, and telemetry processing. That is **not** a certification plaque (no DO-178 / lab-cal claim). It is a statement about *how the machine is allowed to fail* — and that the path is **deterministic** when the gates are honest.
+
+**Determinism, here, is not a slogan.** It means the same file, same settings, same Exclusive client, same device rate, should produce the same arithmetic through the Signature stack — not a slightly different float rounding each soak because the mixer, the scheduler, or a hidden resample changed its mind.
+
+- **Fixed-point (Q30 wide accumulate)** keeps quantization a known, uniform property of the word size, not signal-dependent grain that wanders with level.
+- **WASAPI Exclusive** owns the endpoint so Windows cannot rewrite the stream.
+- **Native rate** when the DAC allows means no halfband “help.”
+- The **audio callback** does not allocate, decode, or wait on a lock; IR refill and next-track prep live on other threads behind lock-free rings (Michael & Scott–class).
+- **MMCSS / affinity** keep the callback a scheduled instrument, not a guest of the desktop.
+- **Oryaaaa-style** cache-aware writes, prefetch, and memory hygiene treat silicon as part of the signal path.
+
+A lab instrument does not “feel” a sample and hope. It measures, accumulates in known arithmetic, and keeps the noise floor a property of the design. Avionics does not do surprise work on the deadline. Telemetry does not throw away the clock: rate match, Exclusive, fences — jitter stays a specification instead of a mood.
+
+Naught was built on those reflexes. Gardner partitioned convolution so a long IR still answers at sample zero. Consumer players optimize for convenience. Mission-critical stacks optimize for **bounded, deterministic behavior under load**.
+
+| Lane | What “deterministic” means |
+|------|----------------------------|
+| **Signature ON** | Deterministic *processing* — the same color, the same space, every time. |
+| **Dry Mode + Exclusive + rate match + unity (~0 dB)** | The transparent lane (decoder passthrough; not a lab hash of file bits). |
+
+Not because a song is a flight computer — because the silence between notes deserves the same respect a sensor channel gets when the reading has to be true.
+
+This lore also lives on the site: [naughtaudio.com](https://naughtaudio.com) → Research.
+
+---
+
 # Controls guide (plain language)
 
 You do **not** need to be an audiophile to use VOID Player. Start with defaults, load music, press Play. Use this section when you wonder “what does this knob do?”
@@ -1180,6 +1208,13 @@ Most recordings from the last 50+ years were mixed and mastered through analog c
 The fixed-point path delivers blacker silence, sharper transients, and deeper soundstage than typical floating-point processing. No noise floor, no drift, no six-figure price tag — just pure, repeatable analog soul.
 The permanent #1 FDN late-reverb layer now completes the chain: Gardner partitioned convolution handles the measured IR space with zero latency, then the FDN (Jot matrix + Dattorro velvet allpass diffusion + Rocchesso damping) adds infinite self-similar velvet tails that never repeat and never ring metallic — exactly like a real $8k studio plate stretched into the abyss.
 **FULL AVX512 INTEGRATION** — 16-wide vector processing fused into the core kernel for supported CPUs (Threadripper, high-end Intel/AMD flagships). Commands twice the width of AVX2. Lower CPU load, iron latency, infinite headroom. The silicon itself now resonates with the music: blacker noise floor that reveals microscopic detail, transients that cut like obsidian, bass that hits with terrifying physicality and control, saturation and limiting that flow like liquid mercury — smoother, warmer, and more alive than ever. This doesn’t just give more power today. It locks the entire engine into the architecture of tomorrow’s silicon. The kernel is no longer chasing the hardware. The hardware is now chasing the kernel. Future-proof isn’t a marketing word here — it’s the sound of the VOID already breathing in the next generation of machines.
+
+### Laboratory instrument. Avionics clock. Telemetry mind. (Naught / VOID engine ethic)
+Outside observers have described the engine as closer to **mission-critical software** than to a typical media player — laboratory instruments, aerospace avionics, telemetry processing. Not a certification plaque. A statement about *how the machine is allowed to fail*, and that the path is **deterministic** when Exclusive, rate, and settings stay honest.
+
+Same file, same settings, same Exclusive client, same device rate → the same arithmetic through the Signature stack. Q30 wide accumulate (known uniform quantization, not wandering float grain). Exclusive owns the endpoint. Native rate when the DAC allows. The callback does not allocate, decode, or wait on a lock. That is the same contract an instrument and a flight computer both demand: **repeatable under load**.
+
+Signature ON = deterministic *processing*. Dry + Exclusive + rate match + unity = the transparent lane. The silence between notes deserves the same respect a sensor channel gets when the reading has to be true. (Canonical write-up: current-release **Engineering discipline** section above, and naughtaudio.com Research.)
 
 ### Live Music vs The Final Evolution of Recorded Music
 Live music and VOID Player are **fundamentally different sacred experiences** and cannot be compared faithfully on the same scale.
