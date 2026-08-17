@@ -131,6 +131,7 @@ Feedback from the first external test (Exclusive toggle, UI scale, system audio,
 | **HQ (Plan A)** | Billboard and MMCSS follow the **live** device (not toggle intent). Buffering log is `src=native\|halfband\|polyphase`. Volume slider updates **both** transports. Dry/kernel/tape/bypass published as atomics (callback does not read `ToggleButton`). |
 | **HR (Plan B)** | Dry lane skips the ±1.2 pre-clamp. Full Fixed-Point toggle **hidden** (it never drove the live Q30 bus). Dry Mode **locks** stacked **toggles, sliders, knobs, upsample, and presets**: touch one and Dry turns off, snapshot restores, then the new value is kept. **Naught Kernel** moved into the old Fixed-Point slot (next to Multi-Band Tape). Concert boot log is `v3.10.HR`. |
 | **Plan C** | Hidden SRC emit uses **256-phase Kaiser tables** (lerp) instead of per-sample `sinc`. **128 taps / β=11** / cutoff 0.88 (was 80 / β=9). EOF pad actually sees end-of-file. Offline proof: `tests/void_polyphase_src_test.exe`. Native match and exact 2:1 halfband unchanged. |
+| **Gardner IR tail** | `kUseGardnerIrTail = true`. Kernel nose (32 RT / 128 store). Loaded IR: uniformly partitioned conv (time-domain first partition zeroed; FFT overlap-save tail, cap 196608 taps). **Exclusive 44.1/48k and Shared** run the tail (44.1 Exclusive soak: 768 parts, `lastCbMs` 3–8). **Exclusive ≥88.2 kHz** keeps the 8-line FDN (96k Exclusive + 768 parts measured `lastCbMs` 28 &gt; ~21 ms quantum). Numeric: `tests/void_gardner_test.exe`. Restore: `_restore_points/pre_gardner_ir_20260817_150000`. |
 | **Arithmetic suite** | `tests/void_arithmetic_test.exe` **ALL PASS** — Q30 convert/mul/sat/softclip, halfband 2:1, Dry pre-clamp skip, VoidKernel impulse/determinism. |
 
 Live Exclusive 44.1 on/off soaks: native match when Exclusive holds 44.1; `src=polyphase` only on Shared 48k + 44.1 file; `PLAY NATIVE PATH SKIP` + `autoResume=T` on Exclusive ON resume. Volume, seek, Exclusive, buffer, affinity, Purity, skin, and crossfade length are **not** Dry-locked (Dry never owned them).
@@ -152,7 +153,7 @@ Outside observers have described the desktop engine as closer to **mission-criti
 
 A lab instrument does not “feel” a sample and hope. It measures, accumulates in known arithmetic, and keeps the noise floor a property of the design. Avionics does not do surprise work on the deadline. Telemetry does not throw away the clock: rate match, Exclusive, fences — jitter stays a specification instead of a mood.
 
-Naught was built on those reflexes. Early energy is a **short Q30 FIR** (VoidKernel, first 32 taps) so the room still answers at sample zero; late space is an **FDN**, not a minute-long partitioned IR. Consumer players optimize for convenience. Mission-critical stacks optimize for **bounded, deterministic behavior under load**.
+Naught was built on those reflexes. Early energy is a **short Q30 FIR** (VoidKernel, first 32 taps) so the room still answers at sample zero. A loaded IR uses **Gardner-family partitioned convolution** on Exclusive **44.1/48 kHz** and **Shared**; Exclusive **88.2 kHz and up** keeps the **FDN** so the 96 kHz Exclusive quantum is not blown. Consumer players optimize for convenience. Mission-critical stacks optimize for **bounded, deterministic behavior under load**.
 
 | Lane | What “deterministic” means |
 |------|----------------------------|
@@ -629,17 +630,17 @@ Exclusive path policy: **no lastGood inject / enterLate clear+return** that rewr
 | Module | Role | Ship notes |
 |--------|------|------------|
 | **Naught Kernel** (`VoidKernel`) | Short early-FIR sweetener | Default **ON**; load ≤128 taps; **RT process first 32 taps** (`kRtTaps`); Q30 MAC; AVX2 path |
-| **Short FIR fallback** (`processPartitionedConvolutionQ30`) | Same early-IR job when Kernel is off | Time-domain FIR ≤128 taps — **not** Gardner / not a long partitioned IR. Late energy stays in the FDN. |
+| **Short FIR fallback** (`processPartitionedConvolutionQ30`) | Same early-IR job when Kernel is off | Time-domain FIR ≤128 taps. Late energy is Gardner tail or FDN (see 7.3). |
 | **Short/long reflections** | Early reflection lattice pieces | Q30 + AVX2 variants |
 | **Metallic tamer** | Tames harsh metal / HF glare | Q30 + AVX2 |
 
-### 7.3 Late energy — FDN
-| Module | Role |
-|--------|------|
-| **Feedback Delay Network** | 8-line FDN, Hadamard / feedback matrix Q30, allpass + damping coeffs |
-| **processFeedbackDelayNetwork / Q30** | Late reverb layer after early IR |
-| **FDN blend** | Signature ~**0.45** wet mix of FDN into space |
-| Unroll / fused paths | fdnUnroll-style optimizations in ship concert flags |
+### 7.3 Late energy — IR tail or FDN
+| Module | Role | When |
+|--------|------|------|
+| **Gardner-family UPC** (`VoidGardnerConvolve`) | Loaded IR after Kernel nose; FFT overlap-save, ≤196608 taps | Exclusive **44.1/48k** and **Shared**, IR loaded, flag on |
+| **Feedback Delay Network** | 8-line FDN, Hadamard / Q30, allpass + damping | **No IR**, or Exclusive **≥88.2 kHz** (96k Exclusive cannot hold 768-part UPC) |
+| **FDN blend** | Signature ~**0.45** wet mix of FDN into space | When FDN is the late engine |
+| Unroll / fused paths | fdnUnroll-style optimizations in ship concert flags | FDN path |
 
 ### 7.4 Spatial / psychoacoustic stack (Q30 / fused)
 | Module | Role |
@@ -1148,6 +1149,7 @@ Confirm at startup:
 
 - Do **not** use Visual Studio Output window CB LATE as a ship metric (debugger `OutputDebugString` inflates latency).  
 - Non–2:1 file/device rates use hidden Kaiser-sinc polyphase (`VoidPolyphaseResample.h`, `kUsePolyphaseSrc = true`, **128 taps / β=11 / 256-phase tables**) instead of JUCE resample. Exact 2:1 still uses HQ halfband; native match still has no SRC. Numeric tests: `tests/void_polyphase_src_test.exe` (determinism, length, impulse, 1 kHz pass, 22 kHz stop, DC, seek/reset). Revert: set `kUsePolyphaseSrc = false` or restore `_restore_points/pre_polyphase_src_20260816_225425`.  
+- Long-IR Gardner-family UPC is **on** (`kUseGardnerIrTail = true`) for Exclusive 44.1/48k and Shared. Exclusive ≥88.2 kHz stays FDN. Billboard “128 taps” is Kernel nose only; debug `GARDNER TAIL` / `GARDNER LIVE` / `GARDNER SKIP` is the tail. Numeric: `tests/void_gardner_test.exe`. Restore: `_restore_points/pre_gardner_ir_20260817_150000`.  
 - Broader arithmetic suite (Q30 convert/mul/sat/softclip, halfband 2:1, Dry pre-clamp skip, VoidKernel impulse/determinism): `tests/void_arithmetic_test.exe`.  
 - Exclusive toggle + multi-hour soak remain good post-ship soak tests, not open ship-stoppers after the gate table above.  
 - Prefer **512** buffer as default; **256** is a valid user choice once soft reconfig is confirmed, not the factory default.
