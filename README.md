@@ -150,6 +150,20 @@ This lore also lives on the site: [naughtaudio.com](https://naughtaudio.com) →
 
 ---
 
+## Dry ↔ Wet — the argument the machine was built to provoke
+
+That step from Dry to Wet is where Naught makes its case. Dry is not a disclaimer. Wet is not an apology. Together they shift the conversation off the analyzer plot and onto how hearing actually works — a room, a body, a pair of ears, not a flat file on a grid.
+
+**Dry** is the integrity test. Exclusive, rate-matched, unity, Signature off: decoder passthrough. It proves the engine is not a sloppy color box that only sounds “good” because it is broken. A professional can measure the clean lane and see a serious player — then stop blaming the software and start listening to the recording. That baseline is the permission slip for everything that follows.
+
+**Wet** is the calculated one. Tape glue, console and horn, kernel early energy, limiter as a ceiling, measured IR and late diffusion — not accidental hash. The stack is a deliberate attempt to put back the physical behavior digital distribution strips out: sound in a space, energy that has already met walls and air, presence that feels like listening in a room rather than inside a silent file. Headphones can make a “perfect” master sound artificially split and flat. The Signature path is built to feel inhabited.
+
+Naught does not try to win a transparency war it never entered. Dry exists so the war can be declined honestly. Wet exists so the listener has to choose: a file that plots like a wire, or a wave that measures “worse” and behaves like a performance. Same master. Two truths. That dare — perceptual realism over a prettier residual — is exactly the argument the product was built to provoke.
+
+Canonical copy also on [naughtaudio.com](https://naughtaudio.com) → Research.
+
+---
+
 # Controls guide (plain language)
 
 You do **not** need to be an audiophile to use VOID Player. Start with defaults, load music, press Play. Use this section when you wonder “what does this knob do?”
@@ -1215,6 +1229,9 @@ Outside observers have described the engine as closer to **mission-critical soft
 Same file, same settings, same Exclusive client, same device rate → the same arithmetic through the Signature stack. Q30 wide accumulate (known uniform quantization, not wandering float grain). Exclusive owns the endpoint. Native rate when the DAC allows. The callback does not allocate, decode, or wait on a lock. That is the same contract an instrument and a flight computer both demand: **repeatable under load**.
 
 Signature ON = deterministic *processing*. Dry + Exclusive + rate match + unity = the transparent lane. The silence between notes deserves the same respect a sensor channel gets when the reading has to be true. (Canonical write-up: current-release **Engineering discipline** section above, and naughtaudio.com Research.)
+
+### Dry ↔ Wet — the argument the machine was built to provoke
+Dry is not a disclaimer. Wet is not an apology. **Dry** is the integrity test (Exclusive, rate-matched, unity, Signature off — decoder passthrough). **Wet** is calculated color and space (tape, console, horn, kernel, limiter, IR, late diffusion) — not accidental hash. Naught does not try to win a transparency war it never entered. Same master. Two truths. Perceptual realism over a prettier residual. (Canonical: current-release **Dry ↔ Wet** section above, and naughtaudio.com Research.)
 
 ### Live Music vs The Final Evolution of Recorded Music
 Live music and VOID Player are **fundamentally different sacred experiences** and cannot be compared faithfully on the same scale.
