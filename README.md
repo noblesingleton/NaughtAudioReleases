@@ -72,7 +72,7 @@
 
 ---
 
-# CURRENT RELEASE — Naught Audio Player (v3.10.HR + Plan C SRC)
+# CURRENT RELEASE — Naught Audio Player (v3.10.HR + 128-tap hidden SRC)
 
 **Product name:** Naught Audio Player (formerly VOID Player / VoidPlayer_Clean)  
 **Website:** https://naughtaudio.com  
@@ -88,6 +88,7 @@ Newest documentation first. Older release notes and historical lore follow below
 **Binary:** `NaughtAudioPlayer.exe` (title bar: Naught Audio Player)  
 **UI skins:** **Naught Skin** combo — *CosmoNaught Cyan* / *Luxury Warm* (look only; **Luxury Warm** is the default).  
 **Dry Mode:** one-toggle plain recording path (right column) — touching a stacked control exits Dry and restores your snapshot. See Controls guide.  
+**Hidden SRC:** no filter UI. Native match (file ≈ device) = no SRC. Exact 2:1 (e.g. 96k→48k) = 31-tap halfband. Any other ratio = hidden **128-tap Kaiser β=11** polyphase (256-phase tables) instead of JUCE resample. Offline proof: `tests/void_polyphase_src_test.exe` (ALL PASS). Kernel stays **32** RT taps; that is early IR, not SRC.  
 
 ---
 
@@ -129,7 +130,7 @@ Feedback from the first external test (Exclusive toggle, UI scale, system audio,
 | **HP** | Exclusive **ON** auto-resumes only if Exclusive actually opened. One-shot `PLAY NATIVE PATH SKIP` so resume cannot close the client we just built. Timer and a manual Play cannot both fire. |
 | **HQ (Plan A)** | Billboard and MMCSS follow the **live** device (not toggle intent). Buffering log is `src=native\|halfband\|polyphase`. Volume slider updates **both** transports. Dry/kernel/tape/bypass published as atomics (callback does not read `ToggleButton`). |
 | **HR (Plan B)** | Dry lane skips the ±1.2 pre-clamp. Full Fixed-Point toggle **hidden** (it never drove the live Q30 bus). Dry Mode **locks** stacked **toggles, sliders, knobs, upsample, and presets**: touch one and Dry turns off, snapshot restores, then the new value is kept. **Naught Kernel** moved into the old Fixed-Point slot (next to Multi-Band Tape). Concert boot log is `v3.10.HR`. |
-| **Plan C** | Hidden SRC emit uses **256-phase Kaiser tables** (lerp) instead of per-sample `sinc`. Same 80-tap / β=9 / cutoff 0.88. EOF pad actually sees end-of-file. Offline proof: `tests/void_polyphase_src_test.exe` **ALL PASS**. Native match and exact 2:1 halfband unchanged. |
+| **Plan C** | Hidden SRC emit uses **256-phase Kaiser tables** (lerp) instead of per-sample `sinc`. **128 taps / β=11** / cutoff 0.88 (was 80 / β=9). EOF pad actually sees end-of-file. Offline proof: `tests/void_polyphase_src_test.exe`. Native match and exact 2:1 halfband unchanged. |
 | **Arithmetic suite** | `tests/void_arithmetic_test.exe` **ALL PASS** — Q30 convert/mul/sat/softclip, halfband 2:1, Dry pre-clamp skip, VoidKernel impulse/determinism. |
 
 Live Exclusive 44.1 on/off soaks: native match when Exclusive holds 44.1; `src=polyphase` only on Shared 48k + 44.1 file; `PLAY NATIVE PATH SKIP` + `autoResume=T` on Exclusive ON resume. Volume, seek, Exclusive, buffer, affinity, Purity, skin, and crossfade length are **not** Dry-locked (Dry never owned them).
@@ -549,7 +550,7 @@ WAV / FLAC / AIFF-class IR files into convolution / kernel path (`Load IR`).
 - **Rate policy when rates differ:**
   1. **Native match** (file ≈ device) → direct attach, OS stages free to UI.
   2. **Exact 2:1** (e.g. 96k→48k) → **`VoidHalfbandDecimate2Source`** (HQ symmetric halfband) + buffering; softclip OS stages forced to base (cost=1).
-  3. **Other ratios** → hidden Kaiser-sinc **polyphase** (`VoidPolyphaseResample`, `kUsePolyphaseSrc = true`, 256-phase tables). OS stages 0 on heavy cost. JUCE resample only if the flag is off.
+  3. **Other ratios** → hidden Kaiser-sinc **polyphase** (`VoidPolyphaseResample`, `kUsePolyphaseSrc = true`, **128 taps / β=11**, 256-phase tables). OS stages 0 on heavy cost. JUCE resample only if the flag is off.
 - **Buffer reconfig (soft-first):** change buffer without killing exclusive client when possible; restore previous setup on fail; hard reopen only if device null; resume playback.
 - **Buffer UI:** 16 / 32 / 64 / 128 / 256 / 512 / 1024 / **2048** (max ship; 4096 removed).
 
@@ -1146,7 +1147,7 @@ Confirm at startup:
 ## Residual / non-blockers (honest)
 
 - Do **not** use Visual Studio Output window CB LATE as a ship metric (debugger `OutputDebugString` inflates latency).  
-- Non–2:1 file/device rates use hidden Kaiser-sinc polyphase (`VoidPolyphaseResample.h`, `kUsePolyphaseSrc = true`, **256-phase tables**) instead of JUCE resample. Exact 2:1 still uses HQ halfband; native match still has no SRC. Numeric tests: `tests/void_polyphase_src_test.exe` (determinism, length, impulse, 1 kHz pass, 22 kHz stop, DC, seek/reset). Revert: set `kUsePolyphaseSrc = false` or restore `_restore_points/pre_polyphase_src_20260816_225425`.  
+- Non–2:1 file/device rates use hidden Kaiser-sinc polyphase (`VoidPolyphaseResample.h`, `kUsePolyphaseSrc = true`, **128 taps / β=11 / 256-phase tables**) instead of JUCE resample. Exact 2:1 still uses HQ halfband; native match still has no SRC. Numeric tests: `tests/void_polyphase_src_test.exe` (determinism, length, impulse, 1 kHz pass, 22 kHz stop, DC, seek/reset). Revert: set `kUsePolyphaseSrc = false` or restore `_restore_points/pre_polyphase_src_20260816_225425`.  
 - Broader arithmetic suite (Q30 convert/mul/sat/softclip, halfband 2:1, Dry pre-clamp skip, VoidKernel impulse/determinism): `tests/void_arithmetic_test.exe`.  
 - Exclusive toggle + multi-hour soak remain good post-ship soak tests, not open ship-stoppers after the gate table above.  
 - Prefer **512** buffer as default; **256** is a valid user choice once soft reconfig is confirmed, not the factory default.
