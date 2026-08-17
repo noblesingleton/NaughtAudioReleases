@@ -84,7 +84,7 @@ Newest documentation first. Older release notes and historical lore follow below
 **Product:** **Naught Audio Player** (formerly VOID Player / VoidPlayer_Clean; JUCE 7, Windows primary)  
 **Website:** https://naughtaudio.com  
 **License:** Free personal use = **`EULA.md`**; commercial = **`LICENSE_COMMERCIAL.md`** / considerthecoin@protonmail.com  
-**Copyright:** Timothy Hart Branton JR aka NobleSingleton @OuterWebster / Naught Audio  
+**Copyright:** Timothy Hart Branton JR / Naught Audio  
 **Binary:** `NaughtAudioPlayer.exe` (title bar: Naught Audio Player)  
 **UI skins:** **Naught Skin** combo — *CosmoNaught Cyan* / *Luxury Warm* (look only; **Luxury Warm** is the default).  
 **Dry Mode:** one-toggle plain recording path (right column) — touching a stacked control exits Dry and restores your snapshot. See Controls guide.  
@@ -928,7 +928,7 @@ This is the **“if in doubt, use this”** profile for modern 6–12 thread des
 
 **Status:** Clean exclusive playback restored to perfection (no mid-track stutter/dropouts). User soak passed with **VoidKernel ON** and **upsample x2**. Pre-splash restore point: `_restore_points/ship_HF_clean_audio_20260724_164534`. Splash video was explored after this tag and **reverted** so ship stays audio-stable; splash can return later.
 
-**Copyright / authorship:** Timothy Hart Branton JR aka NobleSingleton @OuterWebster (README, licenses, source headers, version resource).
+**Copyright / authorship:** Timothy Hart Branton JR (README, licenses, source headers, version resource).
 
 ## What changed since the last README ship notes (post–v3.10.CC)
 
@@ -1776,7 +1776,7 @@ VOID Player is licensed as follows (Apache / open-source dual-license **removed*
 
 Third-party components (including **JUCE**) remain under their own licenses (see JUCE EULA for the framework).
 
-Copyright © 2025–2026 Timothy Hart Branton JR aka NobleSingleton @OuterWebster / VOID Player.
+Copyright © 2025–2026 Timothy Hart Branton JR / VOID Player.
 
 ### v3.10.HF ship note (July 2026)
 See the full **“v3.10.HF — SHIP-WORTHY RELEASE”** section earlier in this README for exclusive stutter/dropout elimination (`VoidBufferingAudioSource`), readahead/affinity split, Load Folder crash fix, Concert defaults (**VoidKernel ON**, **upsample x2**), copyright update, and restore point path. Splash startup was deferred post-HF; audio ship remains HF-clean.
