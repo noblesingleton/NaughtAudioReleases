@@ -102,14 +102,14 @@ Feedback from the first external test (Exclusive toggle, UI scale, system audio,
 | **Exclusive resume still corrupted after stop-then-Play** | **Fixed (HK)** | After mode switch: full `attachTransportWithRatePolicy` rebuild; Play forces rebuild flag if needed; position saved to resume cleanly. |
 | **UI lag scaling to 2K / fullscreen** | **Fixed (HJ)** | Main window is **fixed size** (~1152×900), **not resizable**, **no maximize**. Matches design canvas for a crisp listening-room background. |
 | **Other apps lose sound while Exclusive is on** | **Expected** | WASAPI Exclusive takes the device. Documented below. |
-| **Other apps stay dead after quitting VOID** | **Fixed (HJ)** | Quit path calls **`closeAudioDevice`** so exclusive is released before process exit. |
+| **Other apps stay dead after quitting NAUGHT** | **Fixed (HJ)** | Quit path calls **`closeAudioDevice`** so exclusive is released before process exit. |
 | **Controls not explained for non-audiophiles** | **Documented (this section)** | Full plain-language guide to every button, slider, toggle, and combo below. |
 | **Multi-Band Tape panel look** | **Shipped (HJ)** | Widescreen panel background from `GUI/68.jpg` (embedded 1152×628, contain + veil). |
 
 ### Exclusive mode — what users should know
 
-- **ON (default Concert):** best quality / low-latency path to the DAC. **Other apps usually cannot play sound on that device until you switch to Shared or quit VOID.**
-- **OFF (Shared):** Windows mixes VOID with browsers, Discord, system sounds, etc.
+- **ON (default Concert):** best quality / low-latency path to the DAC. **Other apps usually cannot play sound on that device until you switch to Shared or quit NAUGHT.**
+- **OFF (Shared):** Windows mixes NAUGHT with browsers, Discord, system sounds, etc.
 - **Toggling Exclusive while a track is loaded:** playback **stops** while the device reopens, then auto-resumes from the same position when the new client is live. **Exclusive OFF (Shared)** always resumes after Shared opens. **Exclusive ON** resumes only if Exclusive actually opened — and Play will not run a second exclusive reopen (that was the static path). If Exclusive fails and falls back to Shared, press **Play**. There is a short mute, not a seamless hot-swap.
 
 ### Restore points (recent)
@@ -151,7 +151,7 @@ Outside observers have described the desktop engine as closer to **mission-criti
 
 A lab instrument does not “feel” a sample and hope. It measures, accumulates in known arithmetic, and keeps the noise floor a property of the design. Avionics does not do surprise work on the deadline. Telemetry does not throw away the clock: rate match, Exclusive, fences — jitter stays a specification instead of a mood.
 
-Naught was built on those reflexes. Gardner partitioned convolution so a long IR still answers at sample zero. Consumer players optimize for convenience. Mission-critical stacks optimize for **bounded, deterministic behavior under load**.
+Naught was built on those reflexes. Early energy is a **short Q30 FIR** (VoidKernel, first 32 taps) so the room still answers at sample zero; late space is an **FDN**, not a minute-long partitioned IR. Consumer players optimize for convenience. Mission-critical stacks optimize for **bounded, deterministic behavior under load**.
 
 | Lane | What “deterministic” means |
 |------|----------------------------|
@@ -180,13 +180,13 @@ Canonical copy also on [naughtaudio.com](https://naughtaudio.com) → Research.
 
 # Controls guide (plain language)
 
-You do **not** need to be an audiophile to use VOID Player. Start with defaults, load music, press Play. Use this section when you wonder “what does this knob do?”
+You do **not** need to be an audiophile to use NAUGHT. Start with defaults, load music, press Play. Use this section when you wonder “what does this knob do?”
 
 **Quick start**
 
 1. **Load Folder** (or **Load Audio**) — pick your music.  
 2. Optional: **Load IR** — pick a reverb “space” file (impulse response).  
-3. Leave **Exclusive** ON if you want best sound and can give VOID the sound device.  
+3. Leave **Exclusive** ON if you want best sound and can give NAUGHT the sound device.  
 4. Press **Play**.  
 5. Adjust **Master Volume** first. Only then touch wet/reverb if you want more space.
 
@@ -236,7 +236,7 @@ You do **not** need to be an audiophile to use VOID Player. Start with defaults,
 
 ---
 
-## Tone & character (the “VOID sound”)
+## Tone & character (the “NAUGHT sound”)
 
 | Control | What it does (simple) | Beginner guidance |
 |---------|------------------------|-------------------|
@@ -246,11 +246,11 @@ You do **not** need to be an audiophile to use VOID Player. Start with defaults,
 | **Saturation Type** | Flavor of that warmth: **Off**, **Tape**, or **Tube**. | Tape = smoother tape-like; Tube = different harmonic flavor. Off = no sat type path. |
 | **Full Fixed-Point Path** | Q30 is the live Signature wet identity. | **No user toggle** (hidden). The old switch only poked an unused engine. |
 | **Naught Kernel** | Short “early” reverb sweetener (fine early reflections). | ON by default (Concert). Lives in the main toggle row (old Full Fixed-Point slot), next to Multi-Band Tape. |
-| **VOID Console** | Console-style tone color (mix desk character). | ON for signature; OFF for cleaner path. |
-| **VOID Horn** | Forward “horn/presence” lift in the mid-highs. | ON for signature edge; OFF if too bright. |
-| **VOID Limiter** | Keeps peaks from blowing past a ceiling (safety + loudness control). | Leave ON unless you know you want un-limited peaks. |
+| **NAUGHT Console** | Console-style tone color (mix desk character). | ON for signature; OFF for cleaner path. |
+| **NAUGHT Horn** | Forward “horn/presence” lift in the mid-highs. | ON for signature edge; OFF if too bright. |
+| **NAUGHT Limiter** | Keeps peaks from blowing past a ceiling (safety + loudness control). | Leave ON unless you know you want un-limited peaks. |
 | **Bypass Reverb** | Turns the big reverb/space path off so you hear more dry music. | Use to A/B “with room” vs “dry.” |
-| **VOID Multi-Band Tape** | Opens the 7-band tape panel (see below). When ON, tape processing can run; panel edits each band. | ON for signature glue; open panel only when you want to tweak. |
+| **NAUGHT Multi-Band Tape** | Opens the 7-band tape panel (see below). When ON, tape processing can run; panel edits each band. | ON for signature glue; open panel only when you want to tweak. |
 
 ---
 
@@ -274,7 +274,7 @@ You do **not** need to be an audiophile to use VOID Player. Start with defaults,
 
 ## Multi-Band Tape panel (7 bands)
 
-Opens when **VOID Multi-Band Tape** is turned ON. Think of it as a **tape machine with seven frequency lanes** (from deep bass to airy highs):
+Opens when **NAUGHT Multi-Band Tape** is turned ON. Think of it as a **tape machine with seven frequency lanes** (from deep bass to airy highs):
 
 | Band (typical) | Frequency region (plain English) |
 |----------------|----------------------------------|
@@ -305,7 +305,7 @@ Opens when **VOID Multi-Band Tape** is turned ON. Think of it as a **tape machin
 
 | Control | What it does (simple) |
 |---------|------------------------|
-| **Presets / VOID Signature Sound** | One-click factory balances (Signature, Deep Void, etc., when available). | Start with **VOID Signature Sound / Concert** defaults after install. |
+| **Presets / NAUGHT Signature Sound** | One-click factory balances (Signature, Deep Void, etc., when available). | Start with **NAUGHT Signature Sound / Concert** defaults after install. |
 
 ---
 
@@ -627,8 +627,8 @@ Exclusive path policy: **no lastGood inject / enterLate clear+return** that rewr
 ### 7.2 Early energy
 | Module | Role | Ship notes |
 |--------|------|------------|
-| **VoidKernel** | Short early-FIR sweetener | Default **ON**; load ≤128 taps; **RT process first 32 taps** (`kRtTaps`); Q30 MAC; AVX2 path; mutual exclusive with partitioned early FIR when active |
-| **Partitioned convolution** (`VoidConvolutionEngine` / processPartitionedConvolution*) | Gardner-style long IR | Float + fixed partitions; wet when IR loaded and kernel not owning early IR |
+| **Naught Kernel** (`VoidKernel`) | Short early-FIR sweetener | Default **ON**; load ≤128 taps; **RT process first 32 taps** (`kRtTaps`); Q30 MAC; AVX2 path |
+| **Short FIR fallback** (`processPartitionedConvolutionQ30`) | Same early-IR job when Kernel is off | Time-domain FIR ≤128 taps — **not** Gardner / not a long partitioned IR. Late energy stays in the FDN. |
 | **Short/long reflections** | Early reflection lattice pieces | Q30 + AVX2 variants |
 | **Metallic tamer** | Tames harsh metal / HF glare | Q30 + AVX2 |
 
@@ -655,19 +655,19 @@ Exclusive path policy: **no lastGood inject / enterLate clear+return** that rewr
 | Module | Role |
 |--------|------|
 | **DC removal** | Q30 / AVX2 DC blockers |
-| **Void zeroing** | Soft noise-floor / void zero smoother |
+| **Naught zeroing** | Soft noise-floor / void-zero smoother |
 | **Lightning transients** | Transient emphasis (tamed in concert) |
 | **Strong DC blocker** | Extra subsonic control |
 
 ### 7.6 Color / glue (post / parallel)
 | Module | Role | Default Concert |
 |--------|------|-----------------|
-| **VOID Console** | Console-style tone | ON |
-| **VOID Horn** | Horn / forward presence | ON |
+| **NAUGHT Console** | Console-style tone | ON |
+| **NAUGHT Horn** | Horn / forward presence | ON |
 | **Soft Clip Dry + Warmth Drive** | Dry-path saturation | ON; Tape/Tube/Off combo |
 | **Polyphase softclip OS** | Cascaded half-band stages from upsample factor | x2 ship; max x16 UI |
 | **7-band multi-band tape** | Sub…Brilliance drive/comp/roll | ON; panel per-band |
-| **VOID Limiter** | True-peak style lookahead, Q30 delay/env | ON; thr/ceiling/release knobs |
+| **NAUGHT Limiter** | True-peak style lookahead, Q30 delay/env | ON; thr/ceiling/release knobs |
 
 ### 7.7 Softclip / oversample budgeting (RT)
 - UI factor → stage count (x2→1 stage … x16→4 stages).  
