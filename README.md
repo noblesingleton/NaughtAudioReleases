@@ -72,7 +72,7 @@
 
 ---
 
-# CURRENT RELEASE — Naught Audio Player (v3.10.HR + 128-tap hidden SRC)
+# CURRENT RELEASE — Naught Audio Player (v3.10.HT + 128-tap hidden SRC)
 
 **Product name:** Naught Audio Player (formerly VOID Player / VoidPlayer_Clean)  
 **Website:** https://naughtaudio.com  
@@ -80,7 +80,7 @@
 
 Newest documentation first. Older release notes and historical lore follow below (newest → oldest). **Stop at the Historical documentation archive banner if you want what the binary actually does.**
 
-**Tag:** `v3.10.HR` (HK + Exclusive auto-resume + Plans A–C) + **Naught Audio rebrand**  
+**Tag:** `v3.10.HT` (HR + playlist display + hover tooltips) + **Naught Audio rebrand**  
 **Product:** **Naught Audio Player** (formerly VOID Player / VoidPlayer_Clean; JUCE 7, Windows primary)  
 **Website:** https://naughtaudio.com  
 **License:** Free personal use = **`EULA.md`**; commercial = **`LICENSE_COMMERCIAL.md`** / considerthecoin@protonmail.com  
@@ -89,6 +89,7 @@ Newest documentation first. Older release notes and historical lore follow below
 **UI skins:** **Naught Skin** combo — *CosmoNaught Cyan* / *Luxury Warm* (look only; **Luxury Warm** is the default).  
 **Dry Mode:** one-toggle plain recording path (right column) — touching a stacked control exits Dry and restores your snapshot. See Controls guide.  
 **Hidden SRC:** no filter UI. Native match (file ≈ device) = no SRC. Exact 2:1 (e.g. 96k→48k) = 31-tap halfband. Any other ratio = hidden **128-tap Kaiser β=11** polyphase (256-phase tables) instead of JUCE resample. Offline proof: `tests/void_polyphase_src_test.exe` (ALL PASS). Kernel stays **32** RT taps; that is early IR, not SRC.  
+**Playlist / hover:** long names **ellipsis** at 14 pt; hover shows the full title. Billboard **keeps Unicode** letters (CJK, accents); em-dash / curly quotes still map to ASCII. Hover any control for a short plain-language tip.  
 
 ---
 
@@ -99,7 +100,7 @@ Feedback from the first external test (Exclusive toggle, UI scale, system audio,
 | Report | Status | What we did |
 |--------|--------|-------------|
 | **Exclusive OFF while playing → static / garbage** | **Fixed (HK / HO / HP)** | Mode switch **stops**, reopens, rebuilds transport. **HO/HP:** if you were playing, it **auto-resumes** after Shared or a **live** Exclusive client is up. Exclusive ON will not run a second native-rate reopen on that Play (that was the static path). Billboard says **will resume**, not press Play, when resume is armed. |
-| **Illegal characters on status billboard after Exclusive toggle** | **Fixed (HK)** | Status strings are **pure ASCII** only (no en-dash / ellipsis glyphs that broke some fonts). |
+| **Illegal characters on status billboard after Exclusive toggle** | **Fixed (HK / HS)** | Fancy punctuation (em-dash, curly quotes) still maps to ASCII. **HS:** real letters (CJK, accents) stay on the billboard; they are no longer stripped. |
 | **Exclusive resume still corrupted after stop-then-Play** | **Fixed (HK)** | After mode switch: full `attachTransportWithRatePolicy` rebuild; Play forces rebuild flag if needed; position saved to resume cleanly. |
 | **UI lag scaling to 2K / fullscreen** | **Fixed (HJ)** | Main window is **fixed size** (~1152×900), **not resizable**, **no maximize**. Matches design canvas for a crisp listening-room background. |
 | **Other apps lose sound while Exclusive is on** | **Expected** | WASAPI Exclusive takes the device. Documented below. |
@@ -120,9 +121,10 @@ Feedback from the first external test (Exclusive toggle, UI scale, system audio,
 | `_restore_points/ship_HF_clean_audio_*` | Clean exclusive audio (pre-UI polish) |
 | `_restore_points/ship_HJ_ui_exclusive_*` | Quit release + fixed window + multiband bg |
 | `_restore_points/pre_polyphase_src_20260816_225425` | **Before** hidden polyphase SRC (native / halfband / JUCE resample still ship) |
-| Current tree | **HR** = HK + Exclusive auto-resume + Plans A–C |
+| `_restore_points/pre_playlist_display_v310HR_20261019_115041` | **Before** HS/HT playlist ellipsis, Unicode billboard, and hover tooltips |
+| Current tree | **HT** = HR + playlist display + control tooltips |
 
-### This session — Plans A–C (HO → HR + Plan C)
+### This session — Plans A–C (HO → HR + Plan C) then HS/HT (playlist + tips)
 
 | Pass | What shipped |
 |------|----------------|
@@ -130,6 +132,8 @@ Feedback from the first external test (Exclusive toggle, UI scale, system audio,
 | **HP** | Exclusive **ON** auto-resumes only if Exclusive actually opened. One-shot `PLAY NATIVE PATH SKIP` so resume cannot close the client we just built. Timer and a manual Play cannot both fire. |
 | **HQ (Plan A)** | Billboard and MMCSS follow the **live** device (not toggle intent). Buffering log is `src=native\|halfband\|polyphase`. Volume slider updates **both** transports. Dry/kernel/tape/bypass published as atomics (callback does not read `ToggleButton`). |
 | **HR (Plan B)** | Dry lane skips the ±1.2 pre-clamp. Full Fixed-Point toggle **hidden** (it never drove the live Q30 bus). Dry Mode **locks** stacked **toggles, sliders, knobs, upsample, and presets**: touch one and Dry turns off, snapshot restores, then the new value is kept. **Naught Kernel** moved into the old Fixed-Point slot (next to Multi-Band Tape). Concert boot log is `v3.10.HR`. |
+| **HS** | Playlist long names **ellipsis** (14 pt, no shrink-to-fit). Hover a truncated row for the **full filename**. Billboard **keeps Unicode** letters; em-dash / curly quotes still flatten (HO). `TooltipWindow` so hover tips actually appear. Concert boot log `v3.10.HS`. Restore: `_restore_points/pre_playlist_display_v310HR_20261019_115041`. |
+| **HT** | Hover tooltips on the rest of the rack (Load / Play / mix / Exclusive / buffer / upsample / character toggles / limiter knobs / presets / Multi-Band Tape panel). Same plain language as this Controls guide. Concert boot log `v3.10.HT`. |
 | **Plan C** | Hidden SRC emit uses **256-phase Kaiser tables** (lerp) instead of per-sample `sinc`. **128 taps / β=11** / cutoff 0.88 (was 80 / β=9). EOF pad actually sees end-of-file. Offline proof: `tests/void_polyphase_src_test.exe`. Native match and exact 2:1 halfband unchanged. |
 | **Gardner IR tail** | `kUseGardnerIrTail = true`. Kernel nose (32 RT / 128 store). Loaded IR: uniformly partitioned conv (time-domain first partition zeroed; FFT overlap-save tail, cap 196608 taps). **Exclusive 44.1/48k and Shared** run the tail (44.1 Exclusive soak: 768 parts, `lastCbMs` 3–8). **Exclusive ≥88.2 kHz** keeps the 8-line FDN (96k Exclusive + 768 parts measured `lastCbMs` 28 &gt; ~21 ms quantum). Numeric: `tests/void_gardner_test.exe`. Restore: `_restore_points/pre_gardner_ir_20260817_150000`. |
 | **Arithmetic suite** | `tests/void_arithmetic_test.exe` **ALL PASS** — Q30 convert/mul/sat/softclip, halfband 2:1, Dry pre-clamp skip, VoidKernel impulse/determinism. |
@@ -194,6 +198,8 @@ You do **not** need to be an audiophile to use NAUGHT. Start with defaults, load
 
 **Tip:** If something sounds broken after changing **Exclusive** or **Buffer Size**, press **Stop**, change the setting, wait for the status line, then **Play** again.
 
+**Hover:** rest the pointer on a control for about a second. A short tip explains what it does (same language as the tables below). Long playlist names also show the full title on hover.
+
 ---
 
 ## Transport & library
@@ -204,10 +210,10 @@ You do **not** need to be an audiophile to use NAUGHT. Start with defaults, load
 | **Load Folder** | Scans a folder for supported music and builds a playlist. | Albums / libraries. |
 | **Load IR** | Loads a reverb impulse (the “room” or hall imprint). | After you have music; shapes the wet space. |
 | **Play / Stop** | Starts or stops playback. Green = ready to play; red = playing. | Main control. |
-| **Playlist** | List of loaded tracks. Click a row to switch tracks. | Pick a song; don’t need to reload the folder. |
+| **Playlist** | List of loaded tracks. Click a row to switch tracks. Long names cut with **…** at a readable size; hover for the full title (Unicode filenames included). | Pick a song; don’t need to reload the folder. |
 | **Seek bar** | Scrub through the current track (drag). | Jump in the song. |
 | **Time labels** | Show current time and length. | Read-only. |
-| **Status billboard** | Top message strip: track name, settings feedback, errors. | Read when something changes. |
+| **Status billboard** | Top message strip: track name, settings feedback, errors. Filenames keep **Unicode** letters; fancy dashes/quotes are flattened so the font cannot tofu. | Read when something changes. Hover any other control for a tip. |
 
 **Supported music types (typical):** WAV, FLAC, MP3, AIFF, OGG, M4A/AAC, and similar common formats.
 
@@ -581,7 +587,9 @@ Replaces JUCE `BufferingAudioSource` for ship playback (JUCE maxChunk=2048 + **c
 ### Playlist / library
 - Load single file or **Load Folder** (bg scan, natural sort, cancel stale scans, SafePointer).
 - ListBox playlist UI (frosted glass chrome); click = manual track select.
-- Index / billboard “n/N: filename - playing”.
+- Long names **ellipsis** at 14 pt (HS); hover row for the full title. Short names have no tip.
+- Index / billboard “n/N: filename - playing” with **Unicode** letters kept (HS). Unsupported files still billboard and stop (no skip).
+- Hover tips on transport, mix, device, character, limiter, presets, and the Multi-Band Tape panel (HT).
 
 ### Transport
 - Play / Stop; seek bar; resume from `lastStoppedPosition` on Stop→Play where applicable.
@@ -1167,7 +1175,7 @@ Confirm at startup:
 
 # Historical documentation archive
 
-**Everything below this line is historical.** It is not the current product contract. Ship behavior is the **CURRENT RELEASE** chapter at the top (v3.10.HR). Claims below about 256× / Q63 / 8 GB arenas / live bit-perfect LEDs are lore, not `NaughtAudioPlayer.exe`.
+**Everything below this line is historical.** It is not the current product contract. Ship behavior is the **CURRENT RELEASE** chapter at the top (v3.10.HT). Claims below about 256× / Q63 / 8 GB arenas / live bit-perfect LEDs are lore, not `NaughtAudioPlayer.exe`.
 
 Greetz, phase lore, April 2026 feature sheets, rituals, papers, and older engineering notes. Preserved in full; not deleted. Within this archive, material continues from newer lore toward older notes (v3.7.26 log status placed before LEGAL).
 
