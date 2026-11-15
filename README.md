@@ -72,7 +72,7 @@
 
 ---
 
-# CURRENT RELEASE — Naught Audio Player (v3.10.IY + 128-tap hidden SRC)
+# CURRENT RELEASE — Naught Audio Player (v3.10.IZ + 128-tap hidden SRC)
 
 **Product name:** Naught Audio Player (formerly VOID Player / VoidPlayer_Clean)  
 **Website:** https://naughtaudio.com  
@@ -80,7 +80,7 @@
 
 Newest documentation first. Older release notes and historical lore follow below (newest → oldest). **Stop at the Historical documentation archive banner if you want what the binary actually does.**
 
-**Tag:** `v3.10.IY` (Wave 6 stop, preset tape, purity, Exclusive box, kernel ceiling 0.42) + **Naught Audio rebrand**  
+**Tag:** `v3.10.IZ` (exact slider steps on top of Wave 6) + **Naught Audio rebrand**  
 **Product:** **Naught Audio Player** (formerly VOID Player / VoidPlayer_Clean; JUCE 7, Windows primary)  
 **Website:** https://naughtaudio.com  
 **License:** Free personal use = **`EULA.md`**; commercial = **`LICENSE_COMMERCIAL.md`** / considerthecoin@protonmail.com  
@@ -120,6 +120,7 @@ Newest documentation first. Older release notes and historical lore follow below
 **IV Wave 4:** the 7-band panel is live. Sub through Air are split, then each lane's drive, compression, and roll-off run in Q30 after the existing Warmth glue. Enabled off bypasses that lane and keeps its sound. Concert lane drives stay about 1.10–1.20, the light end of that curve. Mix, limiter floors, and Exclusive are unchanged.  
 **IX Wave 5:** Dry/Wet, Reverb Gain, and Wet Output scale the live kernel wet and the Gardner hall tail while Naught Kernel is on. Concert positions (155% / +1.6 dB / +2.2 dB) are scale 1, so the current hall stays. Pull any of the three toward the left and the room gets smaller; put it back and the hall returns. Warmth, the 7-band split, limiter floors, and Exclusive stay. This pass left the kernel wet cap at 0.12; **IY** raises that ceiling to 0.42.  
 **IY Wave 6:** Stop during a crossfade clears the blend so the next Play starts clean. A custom preset publishes the 7-band lanes, so the sound matches the file without moving a knob. Purity Mode's checkbox and the priority flag stay together. The Exclusive box matches the device that actually opened. The early-kernel ceiling is 0.42, so Concert's requested 0.14 arrives (it was clamped at 0.12) and the three room sliders can make that early room louder than Concert, up to about 0.41. Warmth, the 7-band curve, limiter floors, and Gardner's 0.18 mix constant stay.  
+**IZ exact sliders:** Click a mix slider, warmth, crossfade length, a limiter knob, or a tape-lane slider, then the arrow keys move **one real step**. Dry/Wet is 0.01 (1% on the readout). Reverb Gain and Wet Output are 0.1 dB. Warmth is 0.1. Crossfade length is 0.1 s. Limiter threshold and ceiling are 0.1 dB. Release is 10 ms. Tape lanes are 0.1, or 100 Hz on cutoff. The mouse drag is the same step, one pixel at a time, from the current value. The seek bar still jumps to where you click. Arrow keys change playlist rows only while the playlist itself has focus.  
 
 ---
 
@@ -150,6 +151,7 @@ Feedback from the first external test (Exclusive toggle, UI scale, system audio,
 | **Custom preset did not publish tape lanes** | **Fixed (IY)** | Loading a preset publishes the 7-band lanes. Signature load still writes the Concert lanes. |
 | **Purity and Exclusive boxes could disagree with the engine** | **Fixed (IY)** | Purity’s checkbox and priority flag stay together. The Exclusive box is the request before open, and the live client after open. A failed Exclusive open unchecks the box. |
 | **Early kernel quieter than Concert asked** | **Fixed (IY)** | Ceiling is 0.42. Concert’s 0.14 is stored. The three room sliders can raise that early room, up to about 0.41. |
+| **Sliders skipped about 0.2 and ignored the arrow keys** | **Fixed (IZ)** | Click the slider, then arrows move one step. The mouse drag does too. Dry/Wet 0.01, Reverb and Wet Output 0.1 dB, crossfade 0.1 s. |
 
 ### Exclusive mode — what users should know
 
@@ -167,7 +169,7 @@ Feedback from the first external test (Exclusive toggle, UI scale, system audio,
 | `_restore_points/pre_polyphase_src_20260816_225425` | **Before** hidden polyphase SRC (native / halfband / JUCE resample still ship) |
 | `_restore_points/pre_playlist_display_v310HR_20261019_115041` | **Before** HS/HT playlist ellipsis, Unicode billboard, and hover tooltips |
 | `_restore_points/pre_freeze_harden_v310HT_20261114_190902` | **Before** HU click-next Exclusive hang harden |
-| Current tree | **IY** = stop clears a crossfade, preset tape publishes, purity and Exclusive boxes match the live state, kernel wet ceiling 0.42. IX room send, IV tape, IU seek, and IT Dry keep-click still on |
+| Current tree | **IZ** = sliders move one real step from the keyboard and the mouse. IY stop/preset/purity/Exclusive/kernel ceiling, IX room send, IV tape, IU seek, and IT Dry keep-click still on |
 
 ### This session — Plans A–C (HO → HR + Plan C) then HS/HT (playlist + tips) then HU/HV/HW (click-next hang + join)
 
@@ -209,6 +211,7 @@ Feedback from the first external test (Exclusive toggle, UI scale, system audio,
 | **IV** | 7-band tape panel drives the live split. Warmth glue stays. Concert boot log `v3.10.IV`. |
 | **IX** | Dry/Wet, Reverb Gain, and Wet Output scale the live kernel and Gardner tail. Concert positions stay the current hall. Concert boot log `v3.10.IX`. |
 | **IY** | Stop clears a live crossfade. Custom presets publish the 7-band lanes. Purity and Exclusive boxes match live state. Kernel wet ceiling 0.42 so Concert 0.14 is stored. Concert boot log `v3.10.IY`. |
+| **IZ** | Mix, warmth, crossfade, limiter, and tape-lane sliders take keyboard focus. Arrow keys and the mouse move one interval. Seek bar stays click-to-jump. Concert boot log `v3.10.IZ`. |
 | **Plan C** | Hidden SRC emit uses **256-phase Kaiser tables** (lerp) instead of per-sample `sinc`. **128 taps / β=11** / cutoff 0.88 (was 80 / β=9). EOF pad actually sees end-of-file. Offline proof: `tests/void_polyphase_src_test.exe`. Native match and exact 2:1 halfband unchanged. |
 | **Gardner IR tail** | `kUseGardnerIrTail = true`. Kernel nose (32 RT / 128 store). Loaded IR: uniformly partitioned conv (time-domain first partition zeroed; FFT overlap-save tail, cap 196608 taps). **Exclusive 44.1/48k and Shared** run the tail (44.1 Exclusive soak: 768 parts, `lastCbMs` 3–8). **Exclusive ≥88.2 kHz** keeps the 8-line FDN (96k Exclusive + 768 parts measured `lastCbMs` 28 &gt; ~21 ms quantum). Numeric: `tests/void_gardner_test.exe`. Restore: `_restore_points/pre_gardner_ir_20260817_150000`. |
 | **Arithmetic suite** | `tests/void_arithmetic_test.exe` **ALL PASS** — Q30 convert/mul/sat/softclip, halfband 2:1, Dry pre-clamp skip, VoidKernel impulse/determinism. |
@@ -305,6 +308,8 @@ You do **not** need to be an audiophile to use NAUGHT. Start with defaults, load
 
 With **Naught Kernel** on and an IR loaded, **Dry / Wet**, **Reverb Gain**, and **Wet Output** also scale the early kernel and the Gardner hall tail. Concert positions (155% / +1.6 dB / +2.2 dB) are scale 1, the current hall. Move any of the three and the room follows, both quieter and louder. The early kernel stores Concert’s **0.14** and can rise with that room, up to a ceiling of **0.42**.
 
+**Exact steps:** click the slider, then the left and right arrows move one step. Dry/Wet is 1%. Reverb Gain and Wet Output are 0.1 dB. Warmth is 0.1. A mouse drag is the same step, one pixel at a time, starting from the value you already have. The seek bar still jumps to the spot you click.
+
 **dB** = decibels, a loudness scale. **0 dB** ≈ “unity” (no boost/cut). Positive = louder; negative = quieter.
 
 ---
@@ -343,9 +348,9 @@ With **Naught Kernel** on and an IR loaded, **Dry / Wet**, **Reverb Gain**, and 
 
 | Control | What it does (simple) |
 |---------|------------------------|
-| **Threshold** | How loud a signal must get before limiting starts. Knob is **−3 to 0 dB**, the range the limiter uses. Lower = sooner. |
-| **Ceiling** | Maximum peak allowed out. Knob is **−1.0 to −0.3 dB**, the range the limiter uses. |
-| **Release** | How fast the limiter lets go after a loud peak. Longer = smoother, more “glued”; shorter = faster recovery. |
+| **Threshold** | How loud a signal must get before limiting starts. Knob is **−3 to 0 dB**, the range the limiter uses. Lower = sooner. Click the knob: arrows and the mouse move **0.1 dB**. |
+| **Ceiling** | Maximum peak allowed out. Knob is **−1.0 to −0.3 dB**, the range the limiter uses. Click the knob: arrows and the mouse move **0.1 dB**. |
+| **Release** | How fast the limiter lets go after a loud peak. Longer = smoother, more “glued”; shorter = faster recovery. Click the knob: arrows and the mouse move **10 ms**. |
 
 ---
 
@@ -353,13 +358,13 @@ With **Naught Kernel** on and an IR loaded, **Dry / Wet**, **Reverb Gain**, and 
 
 | Control | What it does (simple) |
 |---------|------------------------|
-| **Crossfade length** | When a playlist track ends and the next begins, how long the blend lasts (about 0.2–8 seconds). **Stop** during that blend clears it. The next **Play** starts clean. | Short ≈ almost instant handoff. Longer ≈ smoother DJ-style overlap. Default ~0.3 s is a good start. |
+| **Crossfade length** | When a playlist track ends and the next begins, how long the blend lasts (about 0.2–8 seconds). **Stop** during that blend clears it. The next **Play** starts clean. Click the slider: arrows and the mouse move **0.1 s**. | Short ≈ almost instant handoff. Longer ≈ smoother DJ-style overlap. Default ~0.3 s is a good start. |
 
 ---
 
 ## Multi-Band Tape panel (7 bands)
 
-Opens when **NAUGHT Multi-Band Tape** is turned ON. **Warmth Drive** is the full-band glue. These knobs are live: drive, compression, and roll-off run on that lane in Q30. Enabled off bypasses the lane and keeps its sound. Loading a preset publishes the lanes immediately. Loading **NAUGHT Signature Sound** writes the Concert lanes (about 1.10–1.20). The lanes run from deep bass to airy highs:
+Opens when **NAUGHT Multi-Band Tape** is turned ON. **Warmth Drive** is the full-band glue. These knobs are live: drive, compression, and roll-off run on that lane in Q30. Enabled off bypasses the lane and keeps its sound. Loading a preset publishes the lanes immediately. Loading **NAUGHT Signature Sound** writes the Concert lanes (about 1.10–1.20). Click a lane slider: arrows and the mouse move **0.1**, or **100 Hz** on cutoff. The lanes run from deep bass to airy highs:
 
 | Band (typical) | Frequency region (plain English) |
 |----------------|----------------------------------|
@@ -1122,7 +1127,7 @@ Confirm at startup (log):
 
 # Prior stable release notes
 
-The notes in this section describe **v3.10.CC** (July 2026). Buffer lists, the upsample default, and the 0.2 s crossfade below are CC. They are not the v3.10.IY contract. Current behavior is the **CURRENT RELEASE** chapter at the top.
+The notes in this section describe **v3.10.CC** (July 2026). Buffer lists, the upsample default, and the 0.2 s crossfade below are CC. They are not the v3.10.IZ contract. Current behavior is the **CURRENT RELEASE** chapter at the top.
 
 # STABLE RELEASE — VOID PLAYER v3.10.CC (July 12, 2026)
 
@@ -1257,7 +1262,7 @@ Confirm at startup:
 
 # Historical documentation archive
 
-**Everything below this line is historical.** It is not the current product contract. Ship behavior is the **CURRENT RELEASE** chapter at the top (v3.10.IY). Claims below about 256× / Q63 / 8 GB arenas / live bit-perfect LEDs are lore, not `NaughtAudioPlayer.exe`.
+**Everything below this line is historical.** It is not the current product contract. Ship behavior is the **CURRENT RELEASE** chapter at the top (v3.10.IZ). Claims below about 256× / Q63 / 8 GB arenas / live bit-perfect LEDs are lore, not `NaughtAudioPlayer.exe`.
 
 Greetz, phase lore, April 2026 feature sheets, rituals, papers, and older engineering notes. Preserved in full; not deleted. Within this archive, material continues from newer lore toward older notes (v3.7.26 log status placed before LEGAL).
 
