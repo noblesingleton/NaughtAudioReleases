@@ -72,7 +72,7 @@
 
 ---
 
-# CURRENT RELEASE — Naught Audio Player (v3.10.HT + 128-tap hidden SRC)
+# CURRENT RELEASE — Naught Audio Player (v3.10.IR + 128-tap hidden SRC)
 
 **Product name:** Naught Audio Player (formerly VOID Player / VoidPlayer_Clean)  
 **Website:** https://naughtaudio.com  
@@ -80,16 +80,40 @@
 
 Newest documentation first. Older release notes and historical lore follow below (newest → oldest). **Stop at the Historical documentation archive banner if you want what the binary actually does.**
 
-**Tag:** `v3.10.HT` (HR + playlist display + hover tooltips) + **Naught Audio rebrand**  
+**Tag:** `v3.10.IR` (Wet Output (dB) fits the rack label box) + **Naught Audio rebrand**  
 **Product:** **Naught Audio Player** (formerly VOID Player / VoidPlayer_Clean; JUCE 7, Windows primary)  
 **Website:** https://naughtaudio.com  
 **License:** Free personal use = **`EULA.md`**; commercial = **`LICENSE_COMMERCIAL.md`** / considerthecoin@protonmail.com  
 **Copyright:** Timothy Hart Branton JR / Naught Audio  
-**Binary:** `NaughtAudioPlayer.exe` (title bar: Naught Audio Player)  
+**Binary:** `NaughtAudioPlayer.exe` (title bar: **Naught Audio Player  ·  Created by Timothy Hart Branton JR**)  
 **UI skins:** **Naught Skin** combo — *CosmoNaught Cyan* / *Luxury Warm* (look only; **Luxury Warm** is the default).  
 **Dry Mode:** one-toggle plain recording path (right column) — touching a stacked control exits Dry and restores your snapshot. See Controls guide.  
 **Hidden SRC:** no filter UI. Native match (file ≈ device) = no SRC. Exact 2:1 (e.g. 96k→48k) = 31-tap halfband. Any other ratio = hidden **128-tap Kaiser β=11** polyphase (256-phase tables) instead of JUCE resample. Offline proof: `tests/void_polyphase_src_test.exe` (ALL PASS). Kernel stays **32** RT taps; that is early IR, not SRC.  
 **Playlist / hover:** long names **ellipsis** at 14 pt; hover shows the full title. Billboard **keeps Unicode** letters (CJK, accents); em-dash / curly quotes still map to ASCII. Hover any control for a short plain-language tip.  
+**HU hang harden:** clicking the next track **keeps** the live Exclusive client (no WASAPI teardown mid-album). Concert DSP, natural pro-xfade, knobs, and Exclusive-as-default are unchanged. Mixed-rate click uses the existing native / halfband / polyphase attach. Native Exclusive match still happens on **Play** and the **Exclusive** checkbox.  
+**HV click join:** mute stays through attach/start (no mid-load unmute pop). Live click does **not** open the wrapped first file (that hung on the last playlist row). FDN/kernel clear on the muted callback; previous-tail hold-join kept; ~5 ms raised-cosine unmute. Natural album xfade is still the full pro path.  
+**HW last-row / pop:** HV still froze the last playlist row (timer + `changeListener` wrap-xfade to track 0 on stale pos/len) and still popped (mute dumped zeros; FDN slam on a short click mute; hold-join never ran on the manual path). HW **suppresses wrap xfade for ~3 s** after a click, requires the playhead to actually be in this file, holds the last sample through mute, cosine-joins after DSP, and does **not** clear FDN/kernel on a click mute. Natural album wrap/xfade still runs after that window.  
+**HX click deadlock / double pop:** HW still Not-Responding on a fast last-row click: the Exclusive callback called `isPlaying`/`getCurrentPosition` **before** mute, so it held the transport lock while the UI `stop`/`setSource` waited. Mute/hold now runs at the **top** of the callback (no transport lock). Click mute is a **latch** (cannot expire mid-load). Rapid clicks coalesce to the **latest** row. After load there is **one** hold-join — no remute (that was the double pop).  
+**HY rapid-click freeze:** HX popping was gone, but any fast playlist click still Not-Responding. Live click was waiting on VoidBuffering’s **0.75 s / 8000-spin prefill** on the UI thread (slow clicks waited it out). Live click now does a **light prefill** (1–2 chunks, ≤48 spins); the rest of the cushion fills on the readahead thread. Play / cold load still use the full prefill.  
+**HZ last-row Not Responding:** HY still froze on the last playlist row. Live Exclusive click now **opens the file on a worker thread** and **destroys the old buffer off the UI thread**. Wrap xfade to track 0 cannot arm until the playhead has actually started this file.  
+**IA last-row freeze:** the album-xfade timer was **prepping the last file on the UI thread** (full 0.75 s prefill). Clicking last then opened that same file again. IA **steals** a prepped next transport and Exclusive xfade prep uses **light prefill**.  
+**IB last-row play/paint:** IA stole the next transport, then **stopped, detached, and `prepareToPlay`'d on the UI thread before `start()`**, with unmute 80 ms later. The selected-row paint never finished and the last track did not play (Exclusive stayed muted through the hang). IB **starts, paints, then unmutes immediately**; steal does not `prepareToPlay` or wipe the ring; live click skips UI-thread prefill (TimeSlice fills).  
+**IC last-row Not Responding after play:** IB painted and played, then still froze. `next.setSource(nullptr)` was **releaseResources** of the stolen last-file buffer on the UI thread (waits on TimeSlice decode). Wrap `createReaderFor` of track 0 was still on the message thread. IC **pins** the stolen buffer, does not wipe a ring already at 0, and opens the wrap file **off the UI thread**.  
+**ID last-row Not Responding after play:** IC still froze after paint+play. Readahead is **Priority::highest on the UI cores** and was spinning (`useTimeSlice` return 0) to fill a **5 s** last-file buffer, so the message pump starved while Exclusive kept playing. ID **yields** that fill for 4 s after a live click (1 chunk / 15 ms). Live `setSource` and wrap next-attach run **off the UI thread**.  
+**IE last-row paint regression:** ID deferred `selectRow` until after worker `setSource`, so a last-row hang left the yellow current-row on the **previous** track. IE paints the clicked row **on the click**; live `setSource` is back on the UI thread (40 ms drain); readahead drops from **highest → normal** for 4 s so Exclusive fill cannot starve the message pump.  
+**IF last-row play + empty clocks:** IE painted the last row and it played, then still Not-Responding — live `setSource` was back on the UI thread waiting TimeSlice `releaseResources` of the previous file. IF keeps **paint-on-click**, moves live `setSource` **off the UI thread**, wrap next-attach **try_lock**s the swap mutex, and starts readahead at **Priority::high** (JUCE `highest` is Win32 **TIME_CRITICAL** on the UI cores). Empty-player **`0:00 / 0:00`** paints on the first frame; Exclusive WASAPI open waits until after that (the ~1–2 s clock delay at launch).  
+**IG last-row TimeSlice spin:** IF still froze after paint+play. Album-xfade wrap starts filling the **last** file from an empty ring; `useTimeSlice` returned **0** (busy-spin, no wait) on the UI cores, so the message pump starved while Exclusive kept playing. IG **does not decode** during the 4 s click yield, and a hungry fill waits **5 ms** instead of spinning.  
+**IH click start + 96k last-row:** IG’s 0-chunk yield plus underrun **advancing the playhead** made manual clicks start **into** the file (large 24-bit 96k FLAC). IH **rewinds to sample 0** and nose-fills **2 chunks on the worker** before start; underrun **holds** the playhead; wrap’s first FLAC decode runs on the **wrap worker** (not TimeSlice/UI cores); readahead is **normal / below-normal** during a click; one 32k chunk per slice.  
+**II last-row clock freeze (all types):** IH still Not-Responding on the last row after paint+play — **seconds counter stuck** because the message pump was dead. `juce::Thread::setAffinityMask` after `startThread` never pins the live TimeSlice, so last-file fill shared the UI cores (0,1,6,7) while Exclusive held 2–5. II **pins fill to leftover high cores** (8-core: 6–7 / `0xC0`) via **live `SetThreadAffinityMask`**, **pins the message thread to leftover low cores** (0–1 / `0x03`), parks the decoder pump on fill cores, and reads the clock atomic instead of `getCurrentPosition`. Shared uses leftover cores outside the Auto audio mask. Click still starts at sample 0; empty-player `0:00 / 0:00` still paints on the first frame.  
+**IJ last-row 30 s preload:** II still froze. A leftover gapless thread (started in `prepareToPlay`) **re-decodes ~30 s of the next playlist file in a loop**. On the second-to-last row that file **is the last track**, so click-last triple-decoded it. Natural xfade **commit** also ran `stop` / `setSource` / full prefill / `createReaderFor` on the message thread. Ship pro-xfade **does not start** that thread; commit is **off the UI** with light prefill.  
+**IK last-row TimeSlice spin:** IJ still spun into Not-Responding. JUCE TimeSliceThread **busy-spins** when a second client is queued (`timeToWait=0` if `index!=0`). Wrap-filling the last file was that second client. IK **parks wrap-next** (no TimeSlice client until the live transport needs fill / xfade begins) and TimeSlice **always waits ≥5 ms**.  
+**IL last→0 wrap double pop:** IK last-row freeze is gone and natural wrap last→0 plays, but the join **popped twice**. Blend-complete slammed full wet onto dry T2, then commit **tore both transports**, rebuilt a new ring, **seek-wiped** the mid-file playhead, and **200 ms muted + unmuted from zero ×4** (same class as HX remute-4). IL **steals** wrap-next onto main (pin prepared + playhead so `setSource` seek-0 is a no-op), **one** hold-join, **one** wet open. No rebuild, no remute.  
+**IM title credit + rack type:** native title bar is **Naught Audio Player  ·  Created by Timothy Hart Branton JR** (`ProjectInfo::projectName` stays `NaughtAudioPlayer` so settings paths do not move). All function labels are **16 pt bold** (was mixed 15 / 16 / 18). Wordmark, billboard, and clocks stay larger.  
+**IN rack labels actually 16 pt bold:** IM set 16 pt, but JUCE **shrinks** a Label to fit its box (default 70%). Exclusive / Soft Clip Dry / Purity Mode had long parentheticals in a **200 px** box (~387 px at 16 pt), so Exclusive clipped at **low la...** and those names looked thinner. Naught Limiter sat in **100 px**. IN **does not shrink**, drops the parentheticals (full wording stays on hover), and widens Multi-Band Tape / Limiter boxes.  
+**IO right-column strip:** IN shifted Dry Mode / Limiter / knobs **70 px left** (and Dry another 20 px), so they sat on slider values and Soft Clip / Multi-Band labels. IO puts that strip back on the **right edge**, aligns Dry with the limiter X, and stops slider value boxes before the strip.  
+**IP pinch:** IO clipped **Naught Limiter** to **Naught Limi...**. Strip moves **55 px left** of IO (still **15 px right** of the IN clash). Slider / combo tracks and dB boxes stop before Dry / knobs.  
+**IQ knob readouts:** Threshold / Ceiling / Release **numbers** sit centred under those captions (they were left-justified in the same box).  
+**IR Wet Output label:** rack text is **Wet Output (dB)** so `(dB)` fits the 180 px 16 pt box. Full name **Wet Output Gain** stays on hover. Slider column unchanged.  
 
 ---
 
@@ -106,6 +130,10 @@ Feedback from the first external test (Exclusive toggle, UI scale, system audio,
 | **Other apps lose sound while Exclusive is on** | **Expected** | WASAPI Exclusive takes the device. Documented below. |
 | **Other apps stay dead after quitting NAUGHT** | **Fixed (HJ)** | Quit path calls **`closeAudioDevice`** so exclusive is released before process exit. |
 | **Controls not explained for non-audiophiles** | **Documented (this section)** | Full plain-language guide to every button, slider, toggle, and combo below. |
+| **Hard freeze on click-next (sometimes with knobs at the same time)** | **Fixed (HU)** | Live playlist click no longer `closeAudioDevice` / Exclusive rate-ladder. Finite mute (was a 1e6 latch). No Concert DSP on the UI thread. Audio callback does not read sliders. Natural album xfade unchanged. |
+| **Freeze on the last playlist row** | **Fixed (HV / HW / HX / HY / HZ / IA / IB / IC / ID / IE / IF / IG / IH / II / IJ / IK)** | **IK:** wrap-next is not a TimeSlice client (JUCE spun at 0 wait with two clients). Fill waits ≥5 ms. IJ 30 s decoder still off; commit still off-UI. |
+| **Quiet click/pop on manual track switch** | **Fixed (HV / HW / HX)** | HV kept mute through attach. HW held last sample + cosine join. **HX:** one join after load (HW remuted 4 blocks after start → double pop). |
+| **Double pop at natural wrap last→0** | **Fixed (IL)** | Steal wrap-next (pin playhead). One hold-join + one wet open. No rebuild / seek wipe / remute-from-zero. |
 | **Multi-Band Tape panel look** | **Shipped (HJ)** | Widescreen panel background from `GUI/68.jpg` (embedded 1152×628, contain + veil). |
 
 ### Exclusive mode — what users should know
@@ -113,6 +141,7 @@ Feedback from the first external test (Exclusive toggle, UI scale, system audio,
 - **ON (default Concert):** best quality / low-latency path to the DAC. **Other apps usually cannot play sound on that device until you switch to Shared or quit NAUGHT.**
 - **OFF (Shared):** Windows mixes NAUGHT with browsers, Discord, system sounds, etc.
 - **Toggling Exclusive while a track is loaded:** playback **stops** while the device reopens, then auto-resumes from the same position when the new client is live. **Exclusive OFF (Shared)** always resumes after Shared opens. **Exclusive ON** resumes only if Exclusive actually opened — and Play will not run a second exclusive reopen (that was the static path). If Exclusive fails and falls back to Shared, press **Play**. There is a short mute, not a seamless hot-swap.
+- **Clicking the next playlist row (HU / HV / HW / HX / HY / HZ / IA / IB / IC / ID / IE / IF / IG / IH / II / IJ / IK / IL):** does **not** reopen Exclusive. The current client stays up; the next file attaches with native match, halfband, or hidden polyphase. Pitch stays correct. Mute **holds the last sample** until the new file is attached, then **one** cosine join. Rapid clicks load the last row you hit. Live click **starts at sample 0** (worker rewind + 2-chunk nose). Fill thread is **pinned off the UI cores**. Wrap-next does **not** TimeSlice-fill the last file in the background (that busy-spun). TimeSlice **always waits ≥5 ms**. The leftover **30 s next-file decoder is off**. Natural album wrap still happens when the last track actually ends; that commit **steals** wrap-next (no rebuild / remute). Empty-player clocks show **`0:00 / 0:00`** on the first frame. To native-match a different file rate, use **Play** or the Exclusive checkbox (those still drain, then reopen).
 
 ### Restore points (recent)
 
@@ -122,9 +151,10 @@ Feedback from the first external test (Exclusive toggle, UI scale, system audio,
 | `_restore_points/ship_HJ_ui_exclusive_*` | Quit release + fixed window + multiband bg |
 | `_restore_points/pre_polyphase_src_20260816_225425` | **Before** hidden polyphase SRC (native / halfband / JUCE resample still ship) |
 | `_restore_points/pre_playlist_display_v310HR_20261019_115041` | **Before** HS/HT playlist ellipsis, Unicode billboard, and hover tooltips |
-| Current tree | **HT** = HR + playlist display + control tooltips |
+| `_restore_points/pre_freeze_harden_v310HT_20261114_190902` | **Before** HU click-next Exclusive hang harden |
+| Current tree | **IR** = Wet Output (dB) fits; IQ knob readouts still centred |
 
-### This session — Plans A–C (HO → HR + Plan C) then HS/HT (playlist + tips)
+### This session — Plans A–C (HO → HR + Plan C) then HS/HT (playlist + tips) then HU/HV/HW (click-next hang + join)
 
 | Pass | What shipped |
 |------|----------------|
@@ -134,6 +164,30 @@ Feedback from the first external test (Exclusive toggle, UI scale, system audio,
 | **HR (Plan B)** | Dry lane skips the ±1.2 pre-clamp. Full Fixed-Point toggle **hidden** (it never drove the live Q30 bus). Dry Mode **locks** stacked **toggles, sliders, knobs, upsample, and presets**: touch one and Dry turns off, snapshot restores, then the new value is kept. **Naught Kernel** moved into the old Fixed-Point slot (next to Multi-Band Tape). Concert boot log is `v3.10.HR`. |
 | **HS** | Playlist long names **ellipsis** (14 pt, no shrink-to-fit). Hover a truncated row for the **full filename**. Billboard **keeps Unicode** letters; em-dash / curly quotes still flatten (HO). `TooltipWindow` so hover tips actually appear. Concert boot log `v3.10.HS`. Restore: `_restore_points/pre_playlist_display_v310HR_20261019_115041`. |
 | **HT** | Hover tooltips on the rest of the rack (Load / Play / mix / Exclusive / buffer / upsample / character toggles / limiter knobs / presets / Multi-Band Tape panel). Same plain language as this Controls guide. Concert boot log `v3.10.HT`. |
+| **HU** | Click-next hang: live playlist click **keeps** the Exclusive client (no `closeAudioDevice`); finite mute; no Concert DSP on the UI thread; no `Slider::getValue` on the audio callback. Natural pro-xfade unchanged. Concert boot log `v3.10.HU`. Restore: `_restore_points/pre_freeze_harden_v310HT_20261114_190902`. |
+| **HV** | Click-next **pop** + last-track hang: mute stays through attach/start (was cleared mid-load); skip wrap `createReaderFor` of the first file; FDN/kernel clear on the muted callback; hold-join kept; ~5 ms raised-cosine unmute. Concert boot log `v3.10.HV`. |
+| **HW** | Last-row freeze + remaining pop: suppress wrap xfade ~3 s after click (stale pos/len vs shorter last file); require playhead actually in this file; mute holds last sample; cosine join after DSP; no FDN slam on click mute; skip decoder-pump I/O on live click. Concert boot log `v3.10.HW`. Natural album xfade unchanged after the window. |
+| **HX** | Last-row **Not Responding** on fast click-through: Exclusive CB took `callbackLock` via `isPlaying`/`getCurrentPosition` **before** mute, deadlocking UI `stop`/`setSource`. Mute/hold is now first in the CB. Click mute is a latch. Rapid clicks coalesce to the latest row. **One** hold-join after load (HW remute-4 was the double pop). Concert boot log `v3.10.HX`. |
+| **HY** | Rapid-click **Not Responding on any row**: live click no longer runs VoidBuffering’s 0.75 s / 8000-spin prefill on the UI thread (that matched “slower clicks freeze less”). Light prefill 1–2 chunks; readahead thread fills the rest. Concert boot log `v3.10.HY`. |
+| **HZ** | Last-row **Not Responding**: live Exclusive click `createReaderFor` + old VoidBuffering destructor no longer run on the UI thread. Wrap xfade to track 0 stays off until this file’s playhead has been seen near 0. Concert boot log `v3.10.HZ`. |
+| **IA** | Last-row freeze: Exclusive xfade prep of the last file no longer does a 0.75 s UI prefill; clicking last **steals** that prepped transport instead of opening the file twice. Concert boot log `v3.10.IA`. |
+| **IB** | IA last-row regression: steal ran **stop / `prepareToPlay` on the UI thread before `start()`**, so the selected-row paint never finished and the last track did not play. IB **starts then paints then unmutes**; skip UI prefill; steal does not wipe the ring. Concert boot log `v3.10.IB`. |
+| **IC** | IB last-row still Not-Responding after paint+play: steal `setSource(nullptr)` tore down the last file on the UI thread; wrap opened track 0 on the message thread. Pin stolen buffer; skip ring wipe at 0; wrap `createReaderFor` off-UI. Concert boot log `v3.10.IC`. |
+| **ID** | IC last-row still Not-Responding after paint+play: readahead **highest** on UI cores spun a 5 s last-file fill. Yield 1 chunk / 15 ms for 4 s after a live click; live `setSource` and wrap attach off-UI. Concert boot log `v3.10.ID`. |
+| **IE** | ID last-row hang + selection paint stuck on the previous row: worker `setSource` skipped `selectRow`. Paint on click; live `setSource` on UI after 40 ms; readahead **normal** for 4 s. Concert boot log `v3.10.IE`. |
+| **IF** | IE last-row still froze after paint+play: UI `setSource` waited TimeSlice. Worker `setSource`; wrap try_lock; readahead **high** not TIME_CRITICAL; empty `0:00 / 0:00` on first frame, Exclusive open after paint. Concert boot log `v3.10.IF`. |
+| **IG** | IF last-row still froze after paint+play: wrap last-file fill busy-spun TimeSlice (`return 0`) on UI cores. Yield decodes nothing; hungry fill waits 5 ms. Concert boot log `v3.10.IG`. |
+| **IH** | IG 0-chunk yield + underrun skip made clicks start into the file; last 96k 24-bit FLAC still froze. Worker rewind-to-0 + 2-chunk nose; hold playhead on underrun; wrap first decode on worker; readahead normal/below-normal; 1 chunk/slice. Concert boot log `v3.10.IH`. |
+| **II** | IH last-row still froze after paint+play; **seconds counter stuck** (message pump dead). Live `SetThreadAffinityMask` on TimeSlice (JUCE mask after start never applied); Exclusive fill 6–7, UI 0–1, audio 2–5; pump on fill cores + clock atomic. All playback types. Concert boot log `v3.10.II`. |
+| **IJ** | II last-row still froze. Legacy playlist decoder **re-read 30 s of the next file** (last row when on second-to-last). Xfade commit `stop`/`setSource`/full prefill/`createReaderFor` on the UI. Thread not started on ship pro-xfade; commit off-UI + light prefill. Concert boot log `v3.10.IJ`. |
+| **IK** | IJ last-row still **spun** into Not-Responding. JUCE TimeSliceThread `timeToWait=0` with two clients (live + wrap last). Park wrap-next; kick fill on the live transport only; TimeSlice waits ≥5 ms. Concert boot log `v3.10.IK`. |
+| **IL** | IK last-row freeze gone; last→0 wrap **double-popped**. Blend-complete wet slam + commit rebuild/seek/200 ms remute-from-zero. Steal wrap-next (pin playhead); one hold-join; one wet open. Concert boot log `v3.10.IL`. |
+| **IM** | Title bar **Naught Audio Player  ·  Created by Timothy Hart Branton JR**. All function labels **16 pt bold**. Concert boot log `v3.10.IM`. |
+| **IN** | IM 16 pt was still shrinking/clipping long names (Exclusive **low la...**; Limiter in 100 px). No shrink; parentheticals on hover; wider Multi-Band / Limiter boxes. Concert boot log `v3.10.IN`. |
+| **IO** | IN Dry / Limiter / knobs overlapped center labels. Strip back to the right edge; Dry aligned with limiter; slider values stop before the strip. Concert boot log `v3.10.IO`. |
+| **IP** | IO clipped **Naught Limi...**. Pinch 55 px left of IO (15 px right of IN). Concert boot log `v3.10.IP`. |
+| **IQ** | Limiter knob readouts centred under Threshold / Ceiling / Release. Concert boot log `v3.10.IQ`. |
+| **IR** | Wet Output rack label **Wet Output (dB)** (was clipped **Gain (d...**). Concert boot log `v3.10.IR`. |
 | **Plan C** | Hidden SRC emit uses **256-phase Kaiser tables** (lerp) instead of per-sample `sinc`. **128 taps / β=11** / cutoff 0.88 (was 80 / β=9). EOF pad actually sees end-of-file. Offline proof: `tests/void_polyphase_src_test.exe`. Native match and exact 2:1 halfband unchanged. |
 | **Gardner IR tail** | `kUseGardnerIrTail = true`. Kernel nose (32 RT / 128 store). Loaded IR: uniformly partitioned conv (time-domain first partition zeroed; FFT overlap-save tail, cap 196608 taps). **Exclusive 44.1/48k and Shared** run the tail (44.1 Exclusive soak: 768 parts, `lastCbMs` 3–8). **Exclusive ≥88.2 kHz** keeps the 8-line FDN (96k Exclusive + 768 parts measured `lastCbMs` 28 &gt; ~21 ms quantum). Numeric: `tests/void_gardner_test.exe`. Restore: `_restore_points/pre_gardner_ir_20260817_150000`. |
 | **Arithmetic suite** | `tests/void_arithmetic_test.exe` **ALL PASS** — Q30 convert/mul/sat/softclip, halfband 2:1, Dry pre-clamp skip, VoidKernel impulse/determinism. |
@@ -210,7 +264,7 @@ You do **not** need to be an audiophile to use NAUGHT. Start with defaults, load
 | **Load Folder** | Scans a folder for supported music and builds a playlist. | Albums / libraries. |
 | **Load IR** | Loads a reverb impulse (the “room” or hall imprint). | After you have music; shapes the wet space. |
 | **Play / Stop** | Starts or stops playback. Green = ready to play; red = playing. | Main control. |
-| **Playlist** | List of loaded tracks. Click a row to switch tracks. Long names cut with **…** at a readable size; hover for the full title (Unicode filenames included). | Pick a song; don’t need to reload the folder. |
+| **Playlist** | List of loaded tracks. Click a row to switch tracks (keeps Exclusive; short mute, cosine unmute, then the next file — including the last row). Long names cut with **…** at a readable size; hover for the full title (Unicode filenames included). | Pick a song; don’t need to reload the folder. |
 | **Seek bar** | Scrub through the current track (drag). | Jump in the song. |
 | **Time labels** | Show current time and length. | Read-only. |
 | **Status billboard** | Top message strip: track name, settings feedback, errors. Filenames keep **Unicode** letters; fancy dashes/quotes are flattened so the font cannot tofu. | Read when something changes. Hover any other control for a tip. |
@@ -226,7 +280,7 @@ You do **not** need to be an audiophile to use NAUGHT. Start with defaults, load
 | **Master Volume** | Overall loudness of everything leaving the player. | **Start here.** If it’s too quiet/loud, this is the first fix. |
 | **Dry / Wet** | Balance between the **dry** signal (the recording itself) and the **wet** signal (reverb/space/processing). Higher = more “in a room / hall.” | Leave near Concert default until you understand reverb. 0% = mostly dry song; higher % = more effect. |
 | **Reverb Gain (dB)** | How strong the reverb engine is driven (how “loud” the space is inside the wet path). | Raise for bigger halls; lower if reverb drowns the music. |
-| **Wet Output Gain (dB)** | Final volume of the wet (effect) path after reverb. | Fine-tune reverb level without changing dry volume as much. |
+| **Wet Output (dB)** | Final volume of the wet (effect) path after reverb (Wet Output Gain). Hover for the full name. | Fine-tune reverb level without changing dry volume as much. |
 
 **dB** = decibels, a loudness scale. **0 dB** ≈ “unity” (no boost/cut). Positive = louder; negative = quieter.
 
@@ -236,11 +290,11 @@ You do **not** need to be an audiophile to use NAUGHT. Start with defaults, load
 
 | Control | What it does (simple) | Beginner guidance |
 |---------|------------------------|-------------------|
-| **Exclusive (Bit-Perfect / Low-Latency)** | When ON, Windows gives Naught more direct control of your speakers/DAC (**best quality**, lower latency). When OFF (**Shared**), Windows mixes Naught with other apps. | **ON** for focused listening. **OFF** if you need YouTube/Discord/system sounds at the same time. Toggle either way: short mute, then auto-resume if that mode actually opened. |
+| **Exclusive** | When ON, Windows gives Naught more direct control of your speakers/DAC (**bit-perfect / low-latency**). When OFF (**Shared**), Windows mixes Naught with other apps. Hover the label for the same tip. | **ON** for focused listening. **OFF** if you need YouTube/Discord/system sounds at the same time. Toggle either way: short mute, then auto-resume if that mode actually opened. |
 | **Buffer Size** | How much audio is prepared per slice (16…2048 samples). **Larger = more stable, more delay.** Smaller = snappier, easier to glitch on weak PCs. | Ship default **2048** is safest. Only lower if you need lower latency and the PC stays clean. |
 | **Upsampling** | Extra internal processing stages for the “warmth/soft-clip” path (Off, x2, x4, x8, x16). Higher = more CPU. | Ship default **x2**. Use **Off** on weak laptops. Don’t jump to x16 unless the machine is strong and sound stays clean. |
 | **CPU Affinity** | Which CPU cores the player prefers (Auto, cores 2–7, Ryzen/Intel specialty options). | Leave **Auto**. Change only if a support note tells you to. |
-| **Purity Mode (Extreme Priority)** | Asks Windows to treat the audio thread as higher priority. | Optional. ON for critical listening sessions; OFF is fine for normal use. |
+| **Purity Mode** | Asks Windows to treat the audio thread as higher priority (extreme). Hover for the tip. | Optional. ON for critical listening sessions; OFF is fine for normal use. |
 
 ---
 
@@ -249,7 +303,7 @@ You do **not** need to be an audiophile to use NAUGHT. Start with defaults, load
 | Control | What it does (simple) | Beginner guidance |
 |---------|------------------------|-------------------|
 | **Dry Mode** | One switch (right column) that turns off the signature effects stack so you hear the plain recording. **OFF restores your previous settings.** Touching a stacked control (Tape, Kernel, Warmth, wet sliders, upsample, preset, …) **exits Dry** and restores the snapshot. | Use for A/B “room vs track.” Default **OFF**. See the Dry Mode section below. |
-| **Soft Clip Dry (Analog Warmth)** | Adds gentle saturation to the dry path so peaks don’t hard-clip; sounds more “analog glue.” | ON by default. OFF for a colder, more clinical dry tone. |
+| **Soft Clip Dry** | Analog warmth: gentle saturation on the dry path so peaks don’t hard-clip. Hover for the tip. | ON by default. OFF for a colder, more clinical dry tone. |
 | **Warmth Drive** | How hard that warmth is pushed (drive amount). | Higher = thicker/more saturated; lower = cleaner. |
 | **Saturation Type** | Flavor of that warmth: **Off**, **Tape**, or **Tube**. | Tape = smoother tape-like; Tube = different harmonic flavor. Off = no sat type path. |
 | **Full Fixed-Point Path** | Q30 is the live Signature wet identity. | **No user toggle** (hidden). The old switch only poked an unused engine. |
@@ -586,7 +640,9 @@ Replaces JUCE `BufferingAudioSource` for ship playback (JUCE maxChunk=2048 + **c
 
 ### Playlist / library
 - Load single file or **Load Folder** (bg scan, natural sort, cancel stale scans, SafePointer).
-- ListBox playlist UI (frosted glass chrome); click = manual track select.
+- ListBox playlist UI (frosted glass chrome); click = manual track select (hard cut, not pro-xfade).
+- **HU:** live click keeps Exclusive (80 ms mute drain, then load). No cold `closeAudioDevice`, no UI-thread Concert preview, no IR purge on that path.
+- **HV:** mute stays through attach/start; skip wrap `createReaderFor` of track 0 when clicking the last row; FDN/kernel clear on the muted callback; hold-join kept; ~5 ms raised-cosine unmute. Finite mute (24 blocks).
 - Long names **ellipsis** at 14 pt (HS); hover row for the full title. Short names have no tip.
 - Index / billboard “n/N: filename - playing” with **Unicode** letters kept (HS). Unsupported files still billboard and stop (no skip).
 - Hover tips on transport, mix, device, character, limiter, presets, and the Multi-Band Tape panel (HT).
@@ -1167,7 +1223,7 @@ Confirm at startup:
 1. Run **Release** exe detached from debugger.  
 2. Load IR → load folder (e.g. 96 k FLAC) → Play — expect full wet T1.  
 3. Let natural end hit T2 with 0.2 s xfade — T2 should match T1 character.  
-4. Click another track mid-play — soft open, no stuck silence.  
+4. Click another track mid-play — soft open, no stuck silence. Click **every** row including the last; join should be clean (no pop, no freeze).  
 5. Change buffer 512 → 1024 → 256 → 512 while playing — must resume, device stays alive.  
 
 
@@ -1175,7 +1231,7 @@ Confirm at startup:
 
 # Historical documentation archive
 
-**Everything below this line is historical.** It is not the current product contract. Ship behavior is the **CURRENT RELEASE** chapter at the top (v3.10.HT). Claims below about 256× / Q63 / 8 GB arenas / live bit-perfect LEDs are lore, not `NaughtAudioPlayer.exe`.
+**Everything below this line is historical.** It is not the current product contract. Ship behavior is the **CURRENT RELEASE** chapter at the top (v3.10.IR). Claims below about 256× / Q63 / 8 GB arenas / live bit-perfect LEDs are lore, not `NaughtAudioPlayer.exe`.
 
 Greetz, phase lore, April 2026 feature sheets, rituals, papers, and older engineering notes. Preserved in full; not deleted. Within this archive, material continues from newer lore toward older notes (v3.7.26 log status placed before LEGAL).
 
