@@ -72,7 +72,7 @@
 
 ---
 
-# CURRENT RELEASE — Naught Audio Player (v3.10.IZ + 128-tap hidden SRC)
+# CURRENT RELEASE — Naught Audio Player (v3.10.JB + 128-tap hidden SRC)
 
 **Product name:** Naught Audio Player (formerly VOID Player / VoidPlayer_Clean)  
 **Website:** https://naughtaudio.com  
@@ -80,7 +80,7 @@
 
 Newest documentation first. Older release notes and historical lore follow below (newest → oldest). **Stop at the Historical documentation archive banner if you want what the binary actually does.**
 
-**Tag:** `v3.10.IZ` (exact slider steps on top of Wave 6) + **Naught Audio rebrand**  
+**Tag:** `v3.10.JB` (playlist keys and silent folder and Play edges, on the JA poles) + **Naught Audio rebrand**  
 **Product:** **Naught Audio Player** (formerly VOID Player / VoidPlayer_Clean; JUCE 7, Windows primary)  
 **Website:** https://naughtaudio.com  
 **License:** Free personal use = **`EULA.md`**; commercial = **`LICENSE_COMMERCIAL.md`** / considerthecoin@protonmail.com  
@@ -121,6 +121,9 @@ Newest documentation first. Older release notes and historical lore follow below
 **IX Wave 5:** Dry/Wet, Reverb Gain, and Wet Output scale the live kernel wet and the Gardner hall tail while Naught Kernel is on. Concert positions (155% / +1.6 dB / +2.2 dB) are scale 1, so the current hall stays. Pull any of the three toward the left and the room gets smaller; put it back and the hall returns. Warmth, the 7-band split, limiter floors, and Exclusive stay. This pass left the kernel wet cap at 0.12; **IY** raises that ceiling to 0.42.  
 **IY Wave 6:** Stop during a crossfade clears the blend so the next Play starts clean. A custom preset publishes the 7-band lanes, so the sound matches the file without moving a knob. Purity Mode's checkbox and the priority flag stay together. The Exclusive box matches the device that actually opened. The early-kernel ceiling is 0.42, so Concert's requested 0.14 arrives (it was clamped at 0.12) and the three room sliders can make that early room louder than Concert, up to about 0.41. Warmth, the 7-band curve, limiter floors, and Gardner's 0.18 mix constant stay.  
 **IZ exact sliders:** Click a mix slider, warmth, crossfade length, a limiter knob, or a tape-lane slider, then the arrow keys move **one real step**. Dry/Wet is 0.01 (1% on the readout). Reverb Gain and Wet Output are 0.1 dB. Warmth is 0.1. Crossfade length is 0.1 s. Limiter threshold and ceiling are 0.1 dB. Release is 10 ms. Tape lanes are 0.1, or 100 Hz on cutoff. The mouse drag is the same step, one pixel at a time, from the current value. The seek bar still jumps to where you click. Arrow keys change playlist rows only while the playlist itself has focus.  
+**JA pole honesty:** Lightning (3400 Hz), lead body / presence / air (280 / 2800 / 7500 Hz), and metallic tame (6000 Hz) use a true one-pole `exp(−2πf/sr)`. The old linear coefficient was clamped, so those filters sat near 1.7–2.7 kHz. Mix amounts stay: lightning boost 0.023, metallic cut 0.13, lead-air gain 0.006. The output is TPDF-dithered to the device word (24-bit when the device reports float or 32). A monitor line under Pro Crossfade, centered between the skin combo and Delete, shows peak hold, short-term LUFS, and correlation. The billboard above Master Volume is two lines. It does not change the samples except for that last dither. High and Air tape lanes stay off. Void-zero stays a 0.028 sub blend. Kernel 0.14 and Gardner 0.18 stay.
+
+**JB playlist keys and quiet edges:** Up and Down only move the highlight. Enter and Space play that row, and the same key again stops it. Left and Right change song only while the playlist has focus, so a slider keeps its arrow keys. A burst of those keys keeps one load and the latest request. Switching folders, and Play from the start, output hard silence instead of a frozen tail sample. A live song change still holds one sample for the join. Metallic tame stays 0.13. The JA poles and the monitor line stay. The startup title is two lines. Pro Crossfade and that meter share a center between the skin combo and Delete, with a matching gap above and below the slider.  
 
 ---
 
@@ -152,6 +155,8 @@ Feedback from the first external test (Exclusive toggle, UI scale, system audio,
 | **Purity and Exclusive boxes could disagree with the engine** | **Fixed (IY)** | Purity’s checkbox and priority flag stay together. The Exclusive box is the request before open, and the live client after open. A failed Exclusive open unchecks the box. |
 | **Early kernel quieter than Concert asked** | **Fixed (IY)** | Ceiling is 0.42. Concert’s 0.14 is stored. The three room sliders can raise that early room, up to about 0.41. |
 | **Sliders skipped about 0.2 and ignored the arrow keys** | **Fixed (IZ)** | Click the slider, then arrows move one step. The mouse drag does too. Dry/Wet 0.01, Reverb and Wet Output 0.1 dB, crossfade 0.1 s. |
+| **Lightning, lead air, and metallic sat at the wrong frequency** | **Fixed (JA)** | Those one-poles use `exp(−2πf/sr)` at 3400 / 7500 / 6000 Hz. Mix amounts stay. Final dither is TPDF. A monitor line shows peak, LUFS, and correlation. |
+| **Quiet scrap when switching folders or pressing Play** | **Fixed (JB)** | Folder load and Play from the start hard-zero. A live song change still holds one sample for the join. Enter and Space play or stop the highlighted row. Left and Right change song while the playlist has focus. Up and Down only move the highlight. |
 
 ### Exclusive mode — what users should know
 
@@ -169,7 +174,9 @@ Feedback from the first external test (Exclusive toggle, UI scale, system audio,
 | `_restore_points/pre_polyphase_src_20260816_225425` | **Before** hidden polyphase SRC (native / halfband / JUCE resample still ship) |
 | `_restore_points/pre_playlist_display_v310HR_20261019_115041` | **Before** HS/HT playlist ellipsis, Unicode billboard, and hover tooltips |
 | `_restore_points/pre_freeze_harden_v310HT_20261114_190902` | **Before** HU click-next Exclusive hang harden |
-| Current tree | **IZ** = sliders move one real step from the keyboard and the mouse. IY stop/preset/purity/Exclusive/kernel ceiling, IX room send, IV tape, IU seek, and IT Dry keep-click still on |
+| `_restore_points/pre_pole_fidelity_v310IZ_20261115_143914` | **Before** JA pole honesty, dither, and the monitor line |
+| `_restore_points/pre_playlist_keys_v310JA_20261115_152922` | **Before** JB playlist keys and the quiet folder / Play edges |
+| Current tree | **JB** = playlist Enter/Space play or stop, Left/Right change song, folder and Play-from-start hard-zero. JA poles, dither, and the monitor line stay. Metallic tame stays 0.13. |
 
 ### This session — Plans A–C (HO → HR + Plan C) then HS/HT (playlist + tips) then HU/HV/HW (click-next hang + join)
 
@@ -212,6 +219,8 @@ Feedback from the first external test (Exclusive toggle, UI scale, system audio,
 | **IX** | Dry/Wet, Reverb Gain, and Wet Output scale the live kernel and Gardner tail. Concert positions stay the current hall. Concert boot log `v3.10.IX`. |
 | **IY** | Stop clears a live crossfade. Custom presets publish the 7-band lanes. Purity and Exclusive boxes match live state. Kernel wet ceiling 0.42 so Concert 0.14 is stored. Concert boot log `v3.10.IY`. |
 | **IZ** | Mix, warmth, crossfade, limiter, and tape-lane sliders take keyboard focus. Arrow keys and the mouse move one interval. Seek bar stays click-to-jump. Concert boot log `v3.10.IZ`. |
+| **JA** | Lightning 3400 Hz, lead air 7500 Hz, and metallic 6000 Hz use `exp(−2πf/sr)`. Amounts stay. TPDF dither on the final word. Monitor line shows peak, LUFS, and correlation. Concert boot log `v3.10.JA`. |
+| **JB** | Enter and Space play or stop the highlighted playlist row. Left and Right change song while the playlist has focus. Up and Down only move the highlight. Folder switch and Play from the start hard-zero. Metallic tame stays 0.13. Concert boot log `v3.10.JB`. |
 | **Plan C** | Hidden SRC emit uses **256-phase Kaiser tables** (lerp) instead of per-sample `sinc`. **128 taps / β=11** / cutoff 0.88 (was 80 / β=9). EOF pad actually sees end-of-file. Offline proof: `tests/void_polyphase_src_test.exe`. Native match and exact 2:1 halfband unchanged. |
 | **Gardner IR tail** | `kUseGardnerIrTail = true`. Kernel nose (32 RT / 128 store). Loaded IR: uniformly partitioned conv (time-domain first partition zeroed; FFT overlap-save tail, cap 196608 taps). **Exclusive 44.1/48k and Shared** run the tail (44.1 Exclusive soak: 768 parts, `lastCbMs` 3–8). **Exclusive ≥88.2 kHz** keeps the 8-line FDN (96k Exclusive + 768 parts measured `lastCbMs` 28 &gt; ~21 ms quantum). Numeric: `tests/void_gardner_test.exe`. Restore: `_restore_points/pre_gardner_ir_20260817_150000`. |
 | **Arithmetic suite** | `tests/void_arithmetic_test.exe` **ALL PASS** — Q30 convert/mul/sat/softclip, halfband 2:1, Dry pre-clamp skip, VoidKernel impulse/determinism. |
@@ -288,7 +297,7 @@ You do **not** need to be an audiophile to use NAUGHT. Start with defaults, load
 | **Load Folder** | Scans a folder for supported music and builds a playlist. | Albums / libraries. |
 | **Load IR** | Loads a reverb impulse (the “room” or hall imprint). | After you have music; shapes the wet space. |
 | **Play / Stop** | Starts or stops playback. Green = ready to play; red = playing. **Stop during a playlist crossfade clears the blend**, so the next Play starts clean. | Main control. |
-| **Playlist** | List of loaded tracks. Click a row to switch tracks (keeps Exclusive; short mute, cosine unmute, then the next file — including the last row). Long names cut with **…** at a readable size; hover for the full title (Unicode filenames included). | Pick a song; don’t need to reload the folder. |
+| **Playlist** | List of loaded tracks. Click a row to switch tracks (keeps Exclusive; short mute, cosine unmute, then the next file — including the last row). Highlight with Up or Down, then Enter or Space plays that row; the same key again stops. Left and Right change song only while the playlist has focus. Long names cut with **…** at a readable size; hover for the full title (Unicode filenames included). | Pick a song; don’t need to reload the folder. |
 | **Seek bar** | Scrub through the current track (drag). While Exclusive or playback is live, the length comes from the clock and the jump runs on a worker. | Jump in the song. |
 | **Time labels** | Show current time and length. | Read-only. |
 | **Status billboard** | Top message strip: track name, settings feedback, errors. Filenames keep **Unicode** letters; fancy dashes/quotes are flattened so the font cannot tofu. | Read when something changes. Hover any other control for a tip. |
@@ -1127,7 +1136,7 @@ Confirm at startup (log):
 
 # Prior stable release notes
 
-The notes in this section describe **v3.10.CC** (July 2026). Buffer lists, the upsample default, and the 0.2 s crossfade below are CC. They are not the v3.10.IZ contract. Current behavior is the **CURRENT RELEASE** chapter at the top.
+The notes in this section describe **v3.10.CC** (July 2026). Buffer lists, the upsample default, and the 0.2 s crossfade below are CC. They are not the v3.10.JB contract. Current behavior is the **CURRENT RELEASE** chapter at the top.
 
 # STABLE RELEASE — VOID PLAYER v3.10.CC (July 12, 2026)
 
@@ -1262,7 +1271,7 @@ Confirm at startup:
 
 # Historical documentation archive
 
-**Everything below this line is historical.** It is not the current product contract. Ship behavior is the **CURRENT RELEASE** chapter at the top (v3.10.IZ). Claims below about 256× / Q63 / 8 GB arenas / live bit-perfect LEDs are lore, not `NaughtAudioPlayer.exe`.
+**Everything below this line is historical.** It is not the current product contract. Ship behavior is the **CURRENT RELEASE** chapter at the top (v3.10.JB). Claims below about 256× / Q63 / 8 GB arenas / live bit-perfect LEDs are lore, not `NaughtAudioPlayer.exe`.
 
 Greetz, phase lore, April 2026 feature sheets, rituals, papers, and older engineering notes. Preserved in full; not deleted. Within this archive, material continues from newer lore toward older notes (v3.7.26 log status placed before LEGAL).
 
